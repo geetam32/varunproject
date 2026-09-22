@@ -10,29 +10,128 @@ const firebaseConfig = {
     appId: "1:724758160522:web:107eac371f0286dc8a7973"
 };
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+// Initialize Firebase safely
+let db = null;
+try {
+    if (typeof firebase !== "undefined") {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.database();
+    }
+} catch (e) {
+    console.warn("Firebase initialization warning:", e);
 }
 
-const db = firebase.database();
-
-// Active database references
+// Active database references & real-time telemetry service
 const BusDbService = {
     activeBusListenerRef: null,
     fleetListenerRef: null,
     announcementsListenerRef: null,
     emergenciesListenerRef: null,
+    driverWatchId: null,
 
     // Monitor Firebase Connection Health
     onConnectionChange(callback) {
+        if (!db) {
+            callback(false);
+            return;
+        }
         db.ref(".info/connected").on("value", (snap) => {
             callback(snap.val() === true);
         });
     },
 
-    // Update Bus Telemetry (called by Driver GPS or Simulator)
+    // Real Device GPS Driver Tracking (HTML5 Geolocation API)
+    startDriverGpsTracking(busId, onUpdate, onError) {
+        if (!navigator.geolocation) {
+            if (onError) onError(new Error("Geolocation is not supported by your browser or device."));
+            return false;
+        }
+
+        this.stopDriverGpsTracking(busId);
+
+        const options = {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 15000
+        };
+
+        const handlePositionSuccess = (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const speedKmh = (position.coords.speed !== null && !isNaN(position.coords.speed) && position.coords.speed >= 0)
+                ? Math.round(position.coords.speed * 3.6)
+                : 0;
+            const heading = position.coords.heading || 0;
+            const accuracy = Math.round(position.coords.accuracy || 0);
+
+            const telemetry = {
+                lat: lat,
+                lng: lng,
+                speed: speedKmh,
+                heading: heading,
+                accuracy: accuracy,
+                status: "ACTIVE",
+                isSimulated: false,
+                updatedAt: Date.now()
+            };
+
+            // Broadcast directly to Firebase Realtime Database
+            if (db) {
+                db.ref(`buses/${busId}`).update(telemetry);
+            }
+
+            if (onUpdate) {
+                onUpdate(telemetry);
+            }
+        };
+
+        const handlePositionError = (error) => {
+            console.warn("Driver GPS geolocation warning:", error.message);
+            if (onError) onError(error);
+        };
+
+        // 1. Get instantaneous initial fix immediately
+        navigator.geolocation.getCurrentPosition(handlePositionSuccess, handlePositionError, options);
+
+        // 2. Stream continuous position updates as driver moves
+        this.driverWatchId = navigator.geolocation.watchPosition(
+            handlePositionSuccess,
+            handlePositionError,
+            options
+        );
+
+        // Immediately flag as ACTIVE in Firebase
+        if (db) {
+            db.ref(`buses/${busId}`).update({
+                status: "ACTIVE",
+                updatedAt: Date.now()
+            });
+        }
+
+        return true;
+    },
+
+    // Stop Real Device GPS Driver Tracking
+    stopDriverGpsTracking(busId) {
+        if (this.driverWatchId !== null) {
+            navigator.geolocation.clearWatch(this.driverWatchId);
+            this.driverWatchId = null;
+        }
+
+        if (busId && db) {
+            db.ref(`buses/${busId}`).update({
+                status: "OFFLINE",
+                speed: 0,
+                updatedAt: Date.now()
+            });
+        }
+    },
+
+    // Update Bus Telemetry directly
     updateBusTelemetry(busId, telemetryData) {
+        if (!db) return Promise.resolve();
         const payload = {
             ...telemetryData,
             updatedAt: Date.now()
@@ -42,6 +141,7 @@ const BusDbService = {
 
     // Set Bus Offline
     setBusOffline(busId) {
+        if (!db) return Promise.resolve();
         return db.ref(`buses/${busId}`).update({
             status: "OFFLINE",
             speed: 0,
@@ -49,8 +149,9 @@ const BusDbService = {
         });
     },
 
-    // Listen to a single bus's live stream
+    // Listen to a single bus's live stream from Firebase
     listenToBus(busId, callback) {
+        if (!db) return;
         if (this.activeBusListenerRef) {
             this.activeBusListenerRef.off();
         }
@@ -69,6 +170,10 @@ const BusDbService = {
 
     // Listen to all buses for Fleet Command View (Management)
     listenToFleet(callback) {
+        if (!db) {
+            callback({});
+            return;
+        }
         if (this.fleetListenerRef) {
             this.fleetListenerRef.off();
         }
@@ -87,12 +192,13 @@ const BusDbService = {
 
     // Publish Announcement to Firebase
     publishAnnouncement(announcement) {
+        if (!db) return Promise.resolve();
         const newRef = db.ref("announcements").push();
         return newRef.set({
             id: newRef.key,
             title: announcement.title,
             message: announcement.message,
-            category: announcement.category || "General", // General, Delay, Weather, Emergency
+            category: announcement.category || "General",
             timestamp: Date.now(),
             author: announcement.author || "DNR Transport Cell"
         });
@@ -100,6 +206,10 @@ const BusDbService = {
 
     // Listen to Announcements
     listenToAnnouncements(callback) {
+        if (!db) {
+            callback([]);
+            return;
+        }
         if (this.announcementsListenerRef) {
             this.announcementsListenerRef.off();
         }
@@ -113,21 +223,21 @@ const BusDbService = {
 
     // Broadcast Emergency SOS
     triggerEmergency(busId, info = {}) {
+        if (!db) return Promise.resolve();
         const newRef = db.ref("emergencies").push();
         const emergencyData = {
             id: newRef.key,
             busId: busId,
             route: BUS_ROUTES[busId] ? BUS_ROUTES[busId].name : busId,
-            driverName: BUS_ROUTES[busId] ? BUS_ROUTES[busId].driver.name : "Driver",
-            driverPhone: BUS_ROUTES[busId] ? BUS_ROUTES[busId].driver.phone : "",
+            driverName: (BUS_ROUTES[busId] && BUS_ROUTES[busId].driver) ? BUS_ROUTES[busId].driver.name : "Driver",
+            driverPhone: (BUS_ROUTES[busId] && BUS_ROUTES[busId].driver) ? BUS_ROUTES[busId].driver.phone : "",
             lat: info.lat || null,
             lng: info.lng || null,
             timestamp: Date.now(),
-            status: "ACTIVE", // ACTIVE or RESOLVED
+            status: "ACTIVE",
             message: info.message || `Emergency SOS beacon activated for ${busId}!`
         };
 
-        // Also mark the bus status as EMERGENCY
         db.ref(`buses/${busId}`).update({
             status: "EMERGENCY",
             updatedAt: Date.now()
@@ -138,9 +248,10 @@ const BusDbService = {
 
     // Resolve Emergency Alert
     resolveEmergency(emergencyId, busId) {
+        if (!db) return Promise.resolve();
         if (busId) {
             db.ref(`buses/${busId}`).update({
-                status: "RUNNING",
+                status: "ACTIVE",
                 updatedAt: Date.now()
             });
         }
@@ -152,6 +263,10 @@ const BusDbService = {
 
     // Listen to Emergency Alerts
     listenToEmergencies(callback) {
+        if (!db) {
+            callback([]);
+            return;
+        }
         if (this.emergenciesListenerRef) {
             this.emergenciesListenerRef.off();
         }

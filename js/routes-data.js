@@ -192,17 +192,49 @@ const BUS_ROUTES = {
     }
 };
 
-// Full Campus Fleet Roster (for Management & Fleet Command Matrix)
-const FLEET_ROSTER = [
-    { busId: "BUS-01", routeId: "R-01: Palakollu Fast Track", sector: "14 STOPS // 32 KM CORRIDOR", driver: "P. Venkateswara Rao", driverId: "DNR-DRV-008", status: "ON ROUTE", coords: "16.5218° N, 81.5448° E", locationDesc: "Poolapalli Parkway Cross", nextStop: "Undi Junction", eta: "08:42 AM (04M)", speed: "46 km/h", fuel: "82% FUEL // HEAVY TRF", statusType: "active" },
-    { busId: "BUS-04", routeId: "R-04: Tanuku Express Line", sector: "18 STOPS // 45 KM CORRIDOR", driver: "K. Satyanarayana", driverId: "DNR-DRV-042", status: "ON ROUTE", coords: "16.6315° N, 81.6110° E", locationDesc: "Old Kakarillapenta", nextStop: "Kalidindi Gate", eta: "07:58 AM (SCHEDULED)", speed: "52 km/h", fuel: "76% FUEL // NOMINAL", statusType: "active" },
-    { busId: "BUS-07", routeId: "R-07: Akividu Feeder Direct", sector: "12 STOPS // 28 KM CORRIDOR", driver: "Ch. Srinivas", driverId: "DNR-DRV-124", status: "DELAYED +7M", coords: "16.5928° N, 81.4310° E", locationDesc: "Canal Road Culvert Congestion", nextStop: "Juvvalapalem Rd", eta: "07:52 (+07M LATE)", speed: "34 km/h", fuel: "69% FUEL // HEAVY TRAFFIC", statusType: "delayed" },
-    { busId: "BUS-11", routeId: "R-11: Tadepalligudem Fast Trunk", sector: "16 STOPS // 41 KM CORRIDOR", driver: "G. Rambabu", driverId: "DNR-DRV-401", status: "ON ROUTE", coords: "16.7115° N, 81.5110° E", locationDesc: "NH-16 Flyover Ramp", nextStop: "Pentapadu Cross", eta: "07:49 AM (SCHEDULED)", speed: "58 km/h", fuel: "88% FUEL // HIGHWAY RUN", statusType: "active" },
-    { busId: "BUS-12", routeId: "R-12: Bhimavaram RTC Feeder", sector: "6 STOPS // 7.2 KM URBAN", driver: "K. Satyanarayana", driverId: "DNR-DRV-042", status: "ON ROUTE", coords: "16.5449° N, 81.5212° E", locationDesc: "Somaram Bank Junction", nextStop: "Balusumoodi Stop", eta: "08:42 AM (08M)", speed: "42 km/h", fuel: "82% FUEL // CITY FLOW", statusType: "active" },
-    { busId: "BUS-16", routeId: "R-16: Standby Reserve 01", sector: "UNASSIGNED // YARD SPARE", driver: "M. Durga Prasad", driverId: "DNR-DRV-122", status: "IN DEPOT", coords: "16.5452° N, 81.5118° E", locationDesc: "DNR Main Garage Bay 3", nextStop: "Campus Staging", eta: "READY ON DEMAND", speed: "00 km/h", fuel: "95% FUEL // ENGINE IDLE", statusType: "depot" },
-    { busId: "BUS-18", routeId: "R-18: Mogalthuru Coastal Line", sector: "15 STOPS // 38 KM CORRIDOR", driver: "V. Subba Rao", driverId: "DNR-DRV-205", status: "ON ROUTE", coords: "16.4320° N, 81.6012° E", locationDesc: "Perupalem Toll Post", nextStop: "Narasapuram Cross", eta: "08:35 AM (ON TIME)", speed: "48 km/h", fuel: "71% FUEL // NOMINAL", statusType: "active" },
-    { busId: "BUS-21", routeId: "R-21: Attili Shuttle Trunk", sector: "11 STOPS // 24 KM CORRIDOR", driver: "T. Suresh Kumar", driverId: "DNR-DRV-310", status: "ON ROUTE", coords: "16.6890° N, 81.5980° E", locationDesc: "Attili Railway Station", nextStop: "Relangi Centre", eta: "08:20 AM (ON TIME)", speed: "44 km/h", fuel: "80% FUEL // NOMINAL", statusType: "active" }
-];
+// Dynamic Campus Fleet Roster Builder (Powered strictly by Firebase Realtime Database)
+function buildFleetRosterFromFirebase(firebaseBuses = {}) {
+    const busKeys = Object.keys(BUS_ROUTES);
+    return busKeys.map(busId => {
+        const route = BUS_ROUTES[busId];
+        const fbData = firebaseBuses[busId] || {};
+        const isActive = fbData.status === "ACTIVE" || fbData.status === "RUNNING";
+        const hasCoords = fbData.lat && fbData.lng;
+
+        const coordsStr = hasCoords
+            ? `${fbData.lat.toFixed(4)}° N, ${fbData.lng.toFixed(4)}° E`
+            : "Campus Depot Base";
+
+        const speedStr = isActive && fbData.speed !== undefined
+            ? `${fbData.speed} km/h`
+            : "0 km/h";
+
+        const statusLabel = isActive ? "ON ROUTE" : "IN DEPOT";
+        const statusType = isActive ? "active" : "depot";
+
+        return {
+            busId: busId,
+            routeId: route.name,
+            sector: route.destination,
+            driver: route.driver ? route.driver.name : "Assigned Driver",
+            driverId: route.driver ? route.driver.id : busId,
+            status: statusLabel,
+            coords: coordsStr,
+            lat: fbData.lat || route.stops[0].coords[0],
+            lng: fbData.lng || route.stops[0].coords[1],
+            locationDesc: isActive ? "Broadcasting Real-time GPS" : "Depot Standby",
+            nextStop: route.stops[route.stops.length - 1].name,
+            eta: isActive ? "In Transit" : "Standby",
+            speed: speedStr,
+            fuel: "Normal",
+            statusType: statusType,
+            updatedAt: fbData.updatedAt || null
+        };
+    });
+}
+
+// Fallback baseline for initial render before Firebase responds
+const FLEET_ROSTER = buildFleetRosterFromFirebase({});
 
 // Distance calculation using Haversine formula (km)
 function calculateDistance(lat1, lon1, lat2, lon2) {

@@ -1,20 +1,25 @@
 // ==========================================================================
-// DNR FLEET TRANSIT - DUAL ENGINE CONTROLLER
-// Campus Transit Clarity (Clean Light) & Precision Slate Telemetry (Dark)
+// DNR CAMPUS TRANSIT - REAL-TIME GPS & FIREBASE TELEMETRY CONTROLLER
+// Real-world Live Tracking System for DNR College, Bhimavaram
+// Dual-Theme: Campus Transit Clarity (Light) & Precision Slate (Dark)
 // ==========================================================================
 
 let currentPortalView = "hub";
-let currentBusId = "BUS-12";
-let currentThemeStyle = "clarity"; // "clarity" or "slate"
+let currentBusId = "BUS-01";         // Default active bus viewed by student
+let driverBusId = "BUS-01";          // Default bus assigned to driver console
+let currentThemeStyle = "clarity";   // "clarity" or "slate"
 let isAudioMuted = false;
-let isTripRunning = true;
+let isDriverRideActive = false;      // True when driver is actively broadcasting real device GPS
 let sosHoldTimer = null;
 let sosHoldCounter = 3;
-let telemetryInterval = null;
+let cachedFirebaseBuses = {};        // Cached fleet snapshot from Firebase
 
-// Initialize when DOM is ready
+// ==========================================================================
+// INITIALIZATION
+// ==========================================================================
+
 document.addEventListener("DOMContentLoaded", () => {
-    // Check saved theme style
+    // 1. Check saved theme style
     const savedTheme = localStorage.getItem("dnr_theme_style");
     if (savedTheme === "slate") {
         applyStyleTheme("slate");
@@ -22,19 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
         applyStyleTheme("clarity");
     }
 
-    // Start live clock
+    // 2. Start live clock
     initLiveClock();
 
-    // Render Student Portal initial data
+    // 3. Render Student Portal initial view
     renderStudentPortalData(currentBusId);
 
-    // Render Management Fleet Roster table
-    renderFleetRosterTable(FLEET_ROSTER);
+    // 4. Render Driver Console initial view
+    updateDriverConsoleView(driverBusId);
 
-    // Start Telemetry simulation loop
-    startContinuousTelemetryLoop();
+    // 5. Connect Realtime Firebase Listeners
+    initFirebaseRealtimeStreams();
 
-    // Query parameters
+    // 6. Check URL query parameters (e.g. ?view=student)
     const urlParams = new URLSearchParams(window.location.search);
     const viewParam = urlParams.get("view");
     if (viewParam && ["hub", "student", "driver", "management"].includes(viewParam)) {
@@ -122,6 +127,10 @@ function switchPortalView(portalKey) {
             }
             MapService.displayRoute(currentBusId);
             MapService.map.invalidateSize();
+            // Resync current telemetry on enter
+            if (cachedFirebaseBuses[currentBusId]) {
+                handleStudentBusTelemetryUpdate(cachedFirebaseBuses[currentBusId]);
+            }
         }, 150);
     } else if (portalKey === "management") {
         setTimeout(() => {
@@ -129,6 +138,8 @@ function switchPortalView(portalKey) {
                 MapService.initManagementMap("managementMap");
             }
             MapService.managementMap.invalidateSize();
+            const roster = buildFleetRosterFromFirebase(cachedFirebaseBuses);
+            MapService.populateManagementFleet(roster);
         }, 150);
     }
 
@@ -153,7 +164,7 @@ window.addEventListener("orientationchange", () => {
 });
 
 // ==========================================================================
-// 3. LIVE CLOCK & TICKER
+// 3. LIVE CLOCK
 // ==========================================================================
 
 function initLiveClock() {
@@ -163,7 +174,8 @@ function initLiveClock() {
         const timeStr = now.toLocaleTimeString("en-US", {
             hour12: true,
             hour: "2-digit",
-            minute: "2-digit"
+            minute: "2-digit",
+            second: "2-digit"
         });
         if (driverClock) driverClock.innerText = timeStr;
     }
@@ -172,112 +184,184 @@ function initLiveClock() {
 }
 
 // ==========================================================================
-// 4. STUDENT & PARENT PORTAL CONTROLLER
+// 4. FIREBASE REALTIME STREAMS INITIALIZATION
 // ==========================================================================
 
-function changeActiveBus(busId) {
-    if (!BUS_ROUTES[busId]) return;
-    currentBusId = busId;
+function initFirebaseRealtimeStreams() {
+    if (typeof BusDbService === "undefined") return;
 
-    renderStudentPortalData(busId);
+    // Monitor Firebase Connection Health
+    BusDbService.onConnectionChange((isConnected) => {
+        const statusEl = document.getElementById("mgmtSyncStatus");
+        const hubStatusEl = document.getElementById("hubGpsStatus");
+        if (statusEl) {
+            statusEl.innerText = isConnected ? "ONLINE" : "OFFLINE";
+            statusEl.style.color = isConnected ? "var(--brand-emerald)" : "var(--brand-crimson)";
+        }
+        if (hubStatusEl) {
+            hubStatusEl.innerHTML = isConnected
+                ? `<span class="pulsing-dot"></span> Live Sync`
+                : `<span style="color:var(--brand-crimson); font-size:12px;">&#9888; Reconnecting...</span>`;
+        }
+    });
 
-    if (MapService.map) {
-        MapService.displayRoute(busId);
-    }
+    // Listen to Full Fleet stream
+    BusDbService.listenToFleet((busesData) => {
+        cachedFirebaseBuses = busesData || {};
+        updateFleetCommandFromFirebase(cachedFirebaseBuses);
 
-    showToast("Route Synced", `Switched tracking line to ${BUS_ROUTES[busId].name}`);
-}
+        // Also update student view if active bus data changed
+        if (cachedFirebaseBuses[currentBusId]) {
+            handleStudentBusTelemetryUpdate(cachedFirebaseBuses[currentBusId]);
+        }
+    });
 
-function renderStudentPortalData(busId) {
-    const route = BUS_ROUTES[busId];
-    if (!route) return;
-
-    // Header title and square
-    const numSquare = document.getElementById("studentRouteSquare");
-    if (numSquare) numSquare.innerText = route.id.replace("BUS-", "");
-
-    const headingEl = document.getElementById("studentRouteHeading");
-    if (headingEl) headingEl.innerHTML = `Bus ${route.id.replace("BUS-", "")} &bull; ${route.origin} &rarr; ${route.destination}`;
-
-    const subEl = document.getElementById("studentRouteSub");
-    if (subEl) subEl.innerText = `Morning Session &bull; Destination: DNR Campus Terminal (${route.departureTime} - ${route.scheduledArrival})`;
-
-    // Vehicle details
-    const modelEl = document.getElementById("cleanBusModel");
-    if (modelEl) modelEl.innerText = route.busModel;
-
-    const regEl = document.getElementById("cleanBusReg");
-    if (regEl) regEl.innerText = route.plateNumber;
-
-    // Driver info
-    const driverNameEl = document.getElementById("cleanDriverName");
-    if (driverNameEl) driverNameEl.innerHTML = `${route.driver.name} &#10003;`;
-
-    const driverExpEl = document.getElementById("cleanDriverExp");
-    if (driverExpEl) driverExpEl.innerText = `Certified Senior Driver &bull; ${route.driver.experience} exp`;
-
-    const initialsEl = document.getElementById("cleanDriverInitials");
-    if (initialsEl) {
-        const parts = route.driver.name.split(" ");
-        initialsEl.innerText = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : "DR";
-    }
-
-    // Occupancy & Comfort
-    const occEl = document.getElementById("cleanOccupancyVal");
-    if (occEl) occEl.innerText = `${route.occupancy} / ${route.capacity} Seats`;
-
-    const comfEl = document.getElementById("cleanComfortVal");
-    if (comfEl) comfEl.innerText = `${route.hvacTemp} Ambient`;
-
-    // Timeline Stops Stepper
-    renderTimelineStops(route.stops);
-}
-
-function renderTimelineStops(stops) {
-    const container = document.getElementById("waypointTimelineList");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    stops.forEach((stop, index) => {
-        const item = document.createElement("div");
-        const isCleared = stop.status === "DEPARTED" || stop.status === "CLEARED";
-        const isActive = stop.status === "APPROACHING" || stop.status === "BOARDED";
-
-        item.className = `timeline-stop-item ${isCleared ? 'cleared' : (isActive ? 'active' : '')}`;
-
-        item.innerHTML = `
-            <div class="stop-marker-dot"></div>
-            <div class="stop-info-text">
-                <h4>${stop.name} ${isActive ? '<span class="status-pill-live" style="font-size:10px;padding:1px 6px;margin-left:4px;">Your Stop</span>' : ''}</h4>
-                <p>${isCleared ? 'Cleared on schedule' : (isActive ? 'Approaching in 8 mins' : 'Upcoming stop')}</p>
-            </div>
-            <div class="stop-time-text">${stop.scheduledTime}</div>
-        `;
-
-        container.appendChild(item);
+    // Listen to Announcements
+    BusDbService.listenToAnnouncements((announcements) => {
+        renderLiveAnnouncementsFeed(announcements);
     });
 }
 
-function triggerCallDriver() {
-    const route = BUS_ROUTES[currentBusId];
+// ==========================================================================
+// 5. DRIVER CONSOLE: REAL DEVICE GPS BROADCASTING
+// ==========================================================================
+
+function changeDriverBus(busId) {
+    if (!BUS_ROUTES[busId]) return;
+
+    // If ride was currently active on previous bus, stop it first
+    if (isDriverRideActive) {
+        toggleDriverRideState();
+    }
+
+    driverBusId = busId;
+    updateDriverConsoleView(busId);
+    showToast("Vehicle Selected", `Driver console switched to ${BUS_ROUTES[busId].name}`);
+}
+
+function updateDriverConsoleView(busId) {
+    const route = BUS_ROUTES[busId];
     if (!route) return;
-    if (typeof AudioService !== "undefined" && !isAudioMuted) {
-        AudioService.playChime();
+
+    const selectEl = document.getElementById("driverBusSelect");
+    if (selectEl && selectEl.value !== busId) selectEl.value = busId;
+
+    const subEl = document.getElementById("driverRouteSubText");
+    if (subEl) {
+        subEl.innerText = `Route: ${route.name}. Tap 'Start Ride' below to broadcast your device's live GPS to students.`;
     }
-    showToast("Calling Driver", `Connecting voice dispatch call to ${route.driver.name} (${route.driver.phone})...`);
 }
 
-function contactControlOffice() {
-    if (typeof AudioService !== "undefined" && !isAudioMuted) {
-        AudioService.playClick();
+// Driver clicks "Start Ride" / "End Ride"
+function toggleDriverRideState() {
+    isDriverRideActive = !isDriverRideActive;
+
+    const btn = document.getElementById("btnDriverRideToggle");
+    const title = document.getElementById("rideBtnTitle");
+    const sub = document.getElementById("rideBtnSub");
+    const icon = document.getElementById("rideBtnIcon");
+    const gpsIndicator = document.getElementById("driverGpsIndicator");
+    const gpsDot = document.getElementById("driverGpsDot");
+    const gpsStatusText = document.getElementById("driverGpsStatusText");
+
+    if (isDriverRideActive) {
+        // Start Real Device Geolocation Tracking
+        const started = BusDbService.startDriverGpsTracking(
+            driverBusId,
+            handleDriverGpsSuccess,
+            handleDriverGpsError
+        );
+
+        if (!started) {
+            isDriverRideActive = false;
+            showToast("GPS Error", "Geolocation is not supported or permission was denied.");
+            return;
+        }
+
+        if (btn) {
+            btn.classList.add("active-green");
+            btn.style.borderColor = "var(--brand-emerald)";
+        }
+        if (title) title.innerText = "End Ride";
+        if (sub) sub.innerText = "Stop Broadcasting GPS";
+        if (icon) {
+            icon.innerHTML = `<rect x="6" y="6" width="12" height="12" fill="currentColor"/>`;
+            icon.style.color = "var(--brand-crimson)";
+        }
+
+        if (gpsIndicator) {
+            gpsIndicator.style.background = "var(--brand-emerald-subtle)";
+            gpsIndicator.style.color = "var(--brand-emerald-text)";
+            gpsIndicator.style.borderColor = "rgba(16, 185, 129, 0.4)";
+        }
+        if (gpsDot) {
+            gpsDot.style.background = "var(--brand-emerald)";
+            gpsDot.className = "pulsing-dot";
+        }
+        if (gpsStatusText) gpsStatusText.innerText = "BROADCASTING REAL GPS";
+
+        if (typeof AudioService !== "undefined" && !isAudioMuted) {
+            AudioService.playClick();
+        }
+
+        showToast("Ride Started", `Broadcasting device GPS for ${driverBusId} directly to students & parents!`);
+    } else {
+        // Stop Real Device Geolocation Tracking & Set Bus Offline in Firebase
+        BusDbService.stopDriverGpsTracking(driverBusId);
+
+        if (btn) {
+            btn.classList.remove("active-green");
+            btn.style.borderColor = "var(--border-default)";
+        }
+        if (title) title.innerText = "Start Ride";
+        if (sub) sub.innerText = "Broadcast Device GPS";
+        if (icon) {
+            icon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+            icon.style.color = "var(--brand-emerald)";
+        }
+
+        if (gpsIndicator) {
+            gpsIndicator.style.background = "var(--canvas-group)";
+            gpsIndicator.style.color = "var(--text-muted)";
+            gpsIndicator.style.borderColor = "var(--border-default)";
+        }
+        if (gpsDot) {
+            gpsDot.style.background = "var(--text-muted)";
+            gpsDot.className = "";
+        }
+        if (gpsStatusText) gpsStatusText.innerText = "GPS Ready (Standby)";
+
+        updateDriverSpeedometer(0);
+
+        if (typeof AudioService !== "undefined" && !isAudioMuted) {
+            AudioService.playClick();
+        }
+
+        showToast("Ride Ended", `${driverBusId} marked as Offline in Depot.`);
     }
-    showToast("Transit Desk Help", "Calling DNR College Transit Helpdesk (+91 8816 221234 Ext 104)...");
 }
 
-// ==========================================================================
-// 5. DRIVER CONSOLE CONTROLLER
-// ==========================================================================
+// Callback when real driver device GPS updates
+function handleDriverGpsSuccess(telemetry) {
+    // 1. Update speedometer with actual speed
+    updateDriverSpeedometer(telemetry.speed);
+
+    // 2. Update accuracy badge
+    const speedStatusPill = document.querySelector(".speed-headline-row .status-pill-live");
+    if (speedStatusPill) {
+        speedStatusPill.innerText = `GPS Accuracy: ±${telemetry.accuracy || 10}m`;
+    }
+
+    // 3. If student portal is viewing this bus, immediately update their view too
+    if (currentBusId === driverBusId) {
+        handleStudentBusTelemetryUpdate(telemetry);
+    }
+}
+
+function handleDriverGpsError(err) {
+    console.warn("Driver GPS Error:", err.message);
+    showToast("GPS Permission Required", "Please allow Location Access in your browser so students can track the bus.");
+}
 
 function updateDriverSpeedometer(speed) {
     const numEl = document.getElementById("cockpitSpeedNumber");
@@ -287,28 +371,17 @@ function updateDriverSpeedometer(speed) {
     if (studentSpeed) studentSpeed.innerText = `${speed} km/h`;
 }
 
-function toggleTripActiveState() {
-    isTripRunning = !isTripRunning;
-    const btn = document.getElementById("btnTripRunning");
-    const title = document.getElementById("tripRunningTitle");
-    const sub = document.getElementById("tripRunningSub");
-
-    if (isTripRunning) {
-        btn.classList.add("active-green");
-        title.innerText = "Trip Active";
-        sub.innerText = "Tap to Resume / Refresh";
-        showToast("Trip Status", "Real-time navigation & route tracking active");
-    } else {
-        btn.classList.remove("active-green");
-        title.innerText = "Trip Paused";
-        sub.innerText = "Tap to Resume";
-        showToast("Trip Paused", "GPS broadcasting paused temporarily");
-    }
-}
-
 function triggerDelayNotice() {
     if (typeof AudioService !== "undefined" && !isAudioMuted) {
         AudioService.playBeep();
+    }
+    if (typeof BusDbService !== "undefined") {
+        BusDbService.publishAnnouncement({
+            title: `${driverBusId}: Traffic Delay Notice`,
+            message: "Driver reported slow road conditions. Expected arrival extended by 5-7 minutes.",
+            category: "Delay",
+            author: `Driver (${driverBusId})`
+        });
     }
     showToast("Delay Alert Queued", "Notified Campus Dispatch & parents: +5 min traffic delay.");
 }
@@ -317,7 +390,7 @@ function triggerCabinChime() {
     if (typeof AudioService !== "undefined") {
         AudioService.playChime();
     }
-    showToast("PA Chime Broadcast", "In-cabin arrival chime played to passengers.");
+    showToast("Audio Chime", "In-cabin passenger chime activated.");
 }
 
 // SOS Distress 3-Second Hold Safety Mechanism
@@ -350,12 +423,308 @@ function triggerSosDistressBeacon() {
     if (typeof AudioService !== "undefined") {
         AudioService.playEmergencyAlert();
     }
+    if (typeof BusDbService !== "undefined") {
+        BusDbService.triggerEmergency(driverBusId, {
+            message: `CRITICAL EMERGENCY SOS activated by driver of ${driverBusId}!`
+        });
+    }
     showToast("CRITICAL SOS TRANSMITTED", "Emergency distress beacon locked to Campus Marshal & Police Desk!");
 }
 
 // ==========================================================================
-// 6. MANAGEMENT & FLEET COMMAND CONTROLLER
+// 6. STUDENT & PARENT PORTAL CONTROLLER
 // ==========================================================================
+
+function changeActiveBus(busId) {
+    if (!BUS_ROUTES[busId]) return;
+    currentBusId = busId;
+
+    renderStudentPortalData(busId);
+
+    if (MapService.map) {
+        MapService.displayRoute(busId);
+    }
+
+    // Connect listener to Firebase for this bus
+    if (typeof BusDbService !== "undefined") {
+        BusDbService.listenToBus(busId, (telemetry) => {
+            if (currentBusId === busId) {
+                handleStudentBusTelemetryUpdate(telemetry);
+            }
+        });
+    }
+
+    showToast("Route Synced", `Now tracking ${BUS_ROUTES[busId].name}`);
+}
+
+function renderStudentPortalData(busId) {
+    const route = BUS_ROUTES[busId];
+    if (!route) return;
+
+    // Header title and square
+    const numSquare = document.getElementById("studentRouteSquare");
+    if (numSquare) numSquare.innerText = route.id.replace("BUS-", "");
+
+    const headingEl = document.getElementById("studentRouteHeading");
+    if (headingEl) headingEl.innerHTML = `Bus ${route.id.replace("BUS-", "")} &bull; ${route.origin} &rarr; ${route.destination}`;
+
+    const subEl = document.getElementById("studentRouteSub");
+    if (subEl) subEl.innerText = `Official Route &bull; Destination: DNR Campus Terminal (${route.departureTime} - ${route.scheduledArrival})`;
+
+    // Select dropdown synchronization
+    const selectEl = document.getElementById("studentBusSelect");
+    if (selectEl && selectEl.value !== busId) selectEl.value = busId;
+
+    // Occupancy & Comfort
+    const occEl = document.getElementById("cleanOccupancyVal");
+    if (occEl) occEl.innerText = `${route.capacity} Seater`;
+
+    const comfEl = document.getElementById("cleanComfortVal");
+    if (comfEl) comfEl.innerText = "GPS Synchronized";
+
+    // Update Scheduled Arrival Time
+    const schedTimeEl = document.getElementById("cleanScheduledTime");
+    if (schedTimeEl) schedTimeEl.innerText = route.scheduledArrival;
+
+    // Update Driver Profile
+    if (route.driver) {
+        const initialsEl = document.getElementById("cleanDriverInitials");
+        if (initialsEl) {
+            const parts = route.driver.name.trim().split(/\s+/);
+            const initials = parts.length > 1
+                ? (parts[0][0] + parts[1][0]).toUpperCase()
+                : route.driver.name.substring(0, 2).toUpperCase();
+            initialsEl.innerText = initials;
+        }
+
+        const driverNameEl = document.getElementById("cleanDriverName");
+        if (driverNameEl) driverNameEl.innerHTML = `${route.driver.name} &#10003;`;
+
+        const driverExpEl = document.getElementById("cleanDriverExp");
+        if (driverExpEl) {
+            driverExpEl.innerHTML = `Certified Senior Driver &bull; ${route.driver.experience} exp &bull; ${route.driver.phone}`;
+        }
+    }
+
+    // Bus Model and Plate Number
+    const busModelEl = document.getElementById("cleanBusModel");
+    if (busModelEl) busModelEl.innerText = route.busModel;
+
+    const busRegEl = document.getElementById("cleanBusReg");
+    if (busRegEl) busRegEl.innerText = route.plateNumber;
+
+    // Timeline Header
+    const timelineTitleEl = document.getElementById("studentTimelineTitle");
+    if (timelineTitleEl) {
+        timelineTitleEl.innerText = `Route ${route.id.replace("BUS-", "")} Timeline`;
+    }
+
+    const timelineCountEl = document.getElementById("studentTimelineStopsCount");
+    if (timelineCountEl) {
+        timelineCountEl.innerText = `${route.stops.length} Stops`;
+    }
+
+    // Initial check against cached Firebase data
+    if (cachedFirebaseBuses[busId]) {
+        handleStudentBusTelemetryUpdate(cachedFirebaseBuses[busId]);
+    } else {
+        handleStudentBusTelemetryUpdate(null);
+    }
+
+    // Timeline Stops Stepper
+    renderTimelineStops(route.stops);
+}
+
+// Updates student UI with live driver telemetry
+function handleStudentBusTelemetryUpdate(telemetry) {
+    const statusPill = document.getElementById("studentBusStatusPill");
+    const noticeText = document.getElementById("studentLiveNoticeText");
+    const syncTimeEl = document.getElementById("studentGpsSyncTime");
+    const speedText = document.getElementById("studentSpeedText");
+    const arrivalHuge = document.querySelector(".arrival-huge-text");
+    const arrivalStop = document.querySelector(".arrival-stop-desc");
+    const distEl = document.getElementById("cleanDistRemaining");
+    const route = BUS_ROUTES[currentBusId];
+
+    const isActive = telemetry && (telemetry.status === "ACTIVE" || telemetry.status === "RUNNING");
+
+    if (isActive && telemetry.lat && telemetry.lng) {
+        // Status badge
+        if (statusPill) {
+            statusPill.innerText = "Live On Route";
+            statusPill.className = "status-pill-live";
+            statusPill.style.background = "var(--brand-emerald-subtle)";
+            statusPill.style.color = "var(--brand-emerald-text)";
+        }
+
+        // Speed
+        const speedKmh = Math.round(telemetry.speed || 0);
+        if (speedText) speedText.innerText = `${speedKmh} km/h`;
+
+        // Calculate real distance to DNR College Campus
+        const distKm = calculateDistance(
+            telemetry.lat,
+            telemetry.lng,
+            DNR_COLLEGE_LOCATION.coords[0],
+            DNR_COLLEGE_LOCATION.coords[1]
+        );
+
+        // Estimate ETA (assume avg 35 km/h in town)
+        const effectiveSpeed = Math.max(speedKmh, 25);
+        const etaMins = Math.max(1, Math.round((distKm / effectiveSpeed) * 60));
+
+        if (arrivalHuge) {
+            arrivalHuge.innerHTML = `${etaMins} <span>mins away</span>`;
+        }
+        if (arrivalStop) {
+            arrivalStop.innerHTML = `Distance to Campus: <strong>${distKm.toFixed(1)} km</strong> &bull; Speed: <strong>${speedKmh} km/h</strong>`;
+        }
+        if (distEl) {
+            distEl.innerText = `${distKm.toFixed(1)} km`;
+        }
+
+        if (noticeText) {
+            noticeText.innerHTML = `Driver is actively transmitting live GPS! Current coordinates: <strong>${telemetry.lat.toFixed(4)}, ${telemetry.lng.toFixed(4)}</strong>`;
+        }
+
+        // Update Map Marker directly on driver's real location
+        if (MapService.map) {
+            MapService.updateBusMarker(currentBusId, {
+                lat: telemetry.lat,
+                lng: telemetry.lng,
+                heading: telemetry.heading || 0,
+                speed: speedKmh,
+                status: "ACTIVE"
+            });
+        }
+    } else {
+        // Bus is Offline in Depot
+        if (statusPill) {
+            statusPill.innerText = "In Depot / Standby";
+            statusPill.className = "status-pill-live";
+            statusPill.style.background = "var(--canvas-group)";
+            statusPill.style.color = "var(--text-muted)";
+            statusPill.style.borderColor = "var(--border-default)";
+        }
+
+        if (speedText) speedText.innerText = "0 km/h";
+
+        if (arrivalHuge) {
+            arrivalHuge.innerHTML = `Depot <span>Standby</span>`;
+        }
+        if (arrivalStop) {
+            arrivalStop.innerText = "This bus is currently stationed at the depot. Waiting for driver to click 'Start Ride'.";
+        }
+        if (distEl) {
+            distEl.innerText = "In Depot";
+        }
+
+        if (noticeText) {
+            noticeText.innerHTML = `Driver has not started this trip yet. Once the driver clicks <strong>'Start Ride'</strong> on their console, live GPS coordinates will appear here automatically.`;
+        }
+
+        // Place marker at route start point
+        if (MapService.map && route && route.stops.length > 0) {
+            MapService.updateBusMarker(currentBusId, {
+                lat: route.stops[0].coords[0],
+                lng: route.stops[0].coords[1],
+                heading: 0,
+                speed: 0,
+                status: "OFFLINE"
+            });
+        }
+    }
+
+    if (syncTimeEl && telemetry && telemetry.updatedAt) {
+        const timeAgoSecs = Math.max(0, Math.round((Date.now() - telemetry.updatedAt) / 1000));
+        syncTimeEl.innerText = `• Synced ${timeAgoSecs}s ago via Firebase`;
+    }
+}
+
+function renderTimelineStops(stops) {
+    const container = document.getElementById("waypointTimelineList");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    stops.forEach((stop) => {
+        const item = document.createElement("div");
+        item.className = "timeline-stop-item";
+
+        item.innerHTML = `
+            <div class="stop-marker-dot"></div>
+            <div class="stop-info-text">
+                <h4>${stop.name}</h4>
+                <p>Corridor Stop Point</p>
+            </div>
+            <div class="stop-time-text">${stop.scheduledTime}</div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+function triggerCallDriver() {
+    const route = BUS_ROUTES[currentBusId];
+    if (!route) return;
+    if (typeof AudioService !== "undefined" && !isAudioMuted) {
+        AudioService.playChime();
+    }
+    const driver = route.driver || { name: "Assigned Driver", phone: "+91 98480 12345" };
+    const phoneClean = driver.phone.replace(/[^0-9+]/g, "");
+    if (window.confirm(`Call ${driver.name} (${driver.phone})?`)) {
+        window.location.href = `tel:${phoneClean}`;
+    }
+}
+
+// ==========================================================================
+// 7. MANAGEMENT & FLEET COMMAND CONTROLLER
+// ==========================================================================
+
+function updateFleetCommandFromFirebase(busesData) {
+    const roster = buildFleetRosterFromFirebase(busesData);
+
+    // 1. Render Table
+    renderFleetRosterTable(roster);
+
+    // 2. Calculate Real Dynamic KPIs
+    const totalCount = Object.keys(BUS_ROUTES).length;
+    let activeCount = 0;
+
+    Object.keys(BUS_ROUTES).forEach(busId => {
+        const b = busesData[busId];
+        if (b && (b.status === "ACTIVE" || b.status === "RUNNING")) {
+            activeCount++;
+        }
+    });
+
+    const depotCount = Math.max(0, totalCount - activeCount);
+
+    // Update Management View KPIs
+    const mgmtTotal = document.getElementById("mgmtTotalBuses");
+    const mgmtActive = document.getElementById("mgmtActiveBuses");
+    const mgmtDepot = document.getElementById("mgmtDepotBuses");
+    const mgmtActiveSub = document.getElementById("mgmtActiveSub");
+
+    if (mgmtTotal) mgmtTotal.innerText = totalCount;
+    if (mgmtActive) mgmtActive.innerText = activeCount;
+    if (mgmtDepot) mgmtDepot.innerText = depotCount;
+    if (mgmtActiveSub) mgmtActiveSub.innerText = activeCount > 0 ? `• ${activeCount} transmitting live GPS` : "• Waiting for driver GPS";
+
+    // Update Hub View Quick Stats Strip
+    const hubTotal = document.getElementById("hubTotalBusesCount");
+    const hubActive = document.getElementById("hubActiveBusesCount");
+    const hubDepot = document.getElementById("hubDepotBusesCount");
+
+    if (hubTotal) hubTotal.innerText = totalCount;
+    if (hubActive) hubActive.innerText = activeCount;
+    if (hubDepot) hubDepot.innerText = depotCount;
+
+    // 3. Update Management GIS Map with real bus markers
+    if (MapService.managementMap) {
+        MapService.populateManagementFleet(roster);
+    }
+}
 
 function renderFleetRosterTable(roster) {
     const tbody = document.getElementById("rosterTableBody");
@@ -367,38 +736,35 @@ function renderFleetRosterTable(roster) {
         const tr = document.createElement("tr");
 
         const statusBadge = item.statusType === "active" ?
-            `<span class="status-capsule on-time"><span class="pulsing-dot" style="width:5px;height:5px;"></span>On Time</span>` :
-            (item.statusType === "delayed" ?
-            `<span class="status-capsule delayed">&#9888; Delayed (+7m)</span>` :
-            `<span class="status-capsule depot">Yard Standby</span>`);
+            `<span class="status-capsule on-time"><span class="pulsing-dot" style="width:5px;height:5px;"></span>ON ROUTE (${item.speed})</span>` :
+            `<span class="status-capsule depot">IN DEPOT</span>`;
 
         tr.innerHTML = `
-            <td><strong style="color: var(--text-primary); font-size: 14px;">${item.busId}</strong></td>
             <td>
-                <div style="font-weight: 700; color: var(--text-primary);">${item.routeId}</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 800; color: var(--text-primary); font-size: 13px;">${item.busId}</span>
+                </div>
+            </td>
+            <td>
+                <strong style="color: var(--text-primary); font-size: 13px;">${item.routeId}</strong>
                 <div style="font-size: 11px; color: var(--text-muted);">${item.sector}</div>
             </td>
             <td>
-                <div style="font-weight: 600; color: var(--text-primary);">${item.driver}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">${item.driverId}</div>
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 13px;">${item.driver}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">ID: ${item.driverId}</div>
             </td>
             <td>${statusBadge}</td>
             <td>
-                <strong style="color: var(--text-primary);">${item.nextStop}</strong>
-                <div style="font-size: 11px; color: var(--text-muted);">${item.speed} &bull; ${item.fuel}</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-primary);">${item.coords}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">${item.locationDesc}</div>
             </td>
             <td>
-                <strong style="color: var(--brand-emerald-text);">${item.eta}</strong>
+                <span style="font-weight: 600; color: var(--text-primary); font-size: 12px;">${item.eta}</span>
             </td>
             <td>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-pill-action" style="padding: 4px 10px; font-size: 11px;" onclick="callFleetDriver('${item.driver}')" title="Call Driver">
-                        📞 Call
-                    </button>
-                    <button class="btn-pill-action" style="padding: 4px 10px; font-size: 11px;" onclick="trackSingleBus('${item.busId}')" title="Track Live">
-                        📍 Track
-                    </button>
-                </div>
+                <button class="filter-pill-btn" onclick="trackSingleBus('${item.busId}')" style="padding: 4px 10px; font-size: 11px; background: var(--canvas-group); border-color: var(--border-default);">
+                    View Map &rarr;
+                </button>
             </td>
         `;
 
@@ -408,11 +774,11 @@ function renderFleetRosterTable(roster) {
 
 function filterFleetRoster(query) {
     const q = query.toLowerCase();
-    const filtered = FLEET_ROSTER.filter(bus =>
+    const allRoster = buildFleetRosterFromFirebase(cachedFirebaseBuses);
+    const filtered = allRoster.filter(bus =>
         bus.busId.toLowerCase().includes(q) ||
         bus.driver.toLowerCase().includes(q) ||
-        bus.routeId.toLowerCase().includes(q) ||
-        bus.nextStop.toLowerCase().includes(q)
+        bus.routeId.toLowerCase().includes(q)
     );
     renderFleetRosterTable(filtered);
 }
@@ -421,18 +787,20 @@ function filterRosterTab(type, btn) {
     document.querySelectorAll(".filter-pill-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
 
+    const allRoster = buildFleetRosterFromFirebase(cachedFirebaseBuses);
     if (type === "ALL") {
-        renderFleetRosterTable(FLEET_ROSTER);
+        renderFleetRosterTable(allRoster);
     } else {
-        const filtered = FLEET_ROSTER.filter(b => b.statusType === type);
+        const filtered = allRoster.filter(b => b.statusType === type);
         renderFleetRosterTable(filtered);
     }
 }
 
 function exportFleetCsv() {
-    let csv = "Bus ID,Route ID,Sector,Driver,Driver ID,Status,Coordinates,Next Stop,ETA,Speed,Fuel\n";
-    FLEET_ROSTER.forEach(b => {
-        csv += `"${b.busId}","${b.routeId}","${b.sector}","${b.driver}","${b.driverId}","${b.status}","${b.coords}","${b.nextStop}","${b.eta}","${b.speed}","${b.fuel}"\n`;
+    const allRoster = buildFleetRosterFromFirebase(cachedFirebaseBuses);
+    let csv = "Bus ID,Route ID,Destination,Driver,Status,Coordinates,Speed\n";
+    allRoster.forEach(b => {
+        csv += `"${b.busId}","${b.routeId}","${b.sector}","${b.driver}","${b.status}","${b.coords}","${b.speed}"\n`;
     });
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -441,11 +809,7 @@ function exportFleetCsv() {
     a.href = url;
     a.download = `DNR_Fleet_Roster_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
-    showToast("CSV Exported", "Downloaded complete 24-vehicle fleet roster CSV.");
-}
-
-function callFleetDriver(name) {
-    showToast("Connecting Dispatch", `Calling ${name} on campus driver radio line...`);
+    showToast("CSV Exported", "Downloaded real-time fleet roster CSV.");
 }
 
 function trackSingleBus(busId) {
@@ -455,12 +819,41 @@ function trackSingleBus(busId) {
     switchPortalView("student");
 }
 
+function renderLiveAnnouncementsFeed(announcements) {
+    const feed = document.querySelector(".alerts-feed-clean");
+    if (!feed) return;
+
+    if (!announcements || announcements.length === 0) {
+        feed.innerHTML = `
+            <div class="alert-item-box normal">
+                <div class="alert-title">Normal Operations</div>
+                <div class="alert-text">All campus feeder routes report nominal conditions. Zero incident alerts active.</div>
+            </div>
+        `;
+        return;
+    }
+
+    feed.innerHTML = "";
+    announcements.slice(0, 4).forEach(item => {
+        const box = document.createElement("div");
+        box.className = `alert-item-box ${item.category === 'Delay' ? '' : 'normal'}`;
+        const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now";
+
+        box.innerHTML = `
+            <span class="alert-time">${timeStr}</span>
+            <div class="alert-title">${item.title}</div>
+            <div class="alert-text">${item.message}</div>
+        `;
+        feed.appendChild(box);
+    });
+}
+
 function openScheduleModal() {
-    showToast("Safety Drill", "Campus safety drill simulation broadcast dispatched to 18 active units.");
+    showToast("Safety Broadcast", "Dispatching safety confirmation notice to active units.");
 }
 
 function openNewRouteModal() {
-    showToast("Fleet Broadcast", "Opening campus-wide transit announcement composer...");
+    showToast("Fleet Announcement", "Composer ready to broadcast updates to parents & students.");
 }
 
 function callCampusSecurity() {
@@ -478,46 +871,7 @@ function toggleLiveTraffic(btn) {
 }
 
 // ==========================================================================
-// 7. CONTINUOUS REAL-TIME TELEMETRY LOOP
-// ==========================================================================
-
-function startContinuousTelemetryLoop() {
-    let waypointIndex = 0;
-
-    telemetryInterval = setInterval(() => {
-        if (!isTripRunning) return;
-
-        const activeRoute = BUS_ROUTES[currentBusId] || BUS_ROUTES["BUS-12"];
-        const waypoints = activeRoute.waypoints;
-
-        if (waypoints.length > 0) {
-            waypointIndex = (waypointIndex + 1) % waypoints.length;
-            const pt = waypoints[waypointIndex];
-            const nextPt = waypoints[(waypointIndex + 1) % waypoints.length];
-            const heading = calculateBearing(pt[0], pt[1], nextPt[0], nextPt[1]);
-
-            // Realistic speed variation
-            const simulatedSpeed = Math.floor(36 + Math.sin(Date.now() / 3000) * 8);
-
-            // Update Map Marker
-            if (MapService.map) {
-                MapService.updateBusMarker(currentBusId, {
-                    lat: pt[0],
-                    lng: pt[1],
-                    heading: heading,
-                    speed: simulatedSpeed,
-                    status: "RUNNING"
-                });
-            }
-
-            // Update Cockpit Speedometer
-            updateDriverSpeedometer(simulatedSpeed);
-        }
-    }, 1200);
-}
-
-// ==========================================================================
-// 8. UTILITIES: TOASTS
+// 8. TOAST NOTIFICATION UTILITY
 // ==========================================================================
 
 function showToast(title, message) {

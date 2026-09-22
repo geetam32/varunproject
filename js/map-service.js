@@ -268,20 +268,34 @@ const MapService = {
         }
     },
 
-    populateManagementFleet() {
+    populateManagementFleet(rosterList = null) {
         if (!this.managementMap) return;
 
-        const isSlate = this.currentTheme === "slate";
+        // Clear existing markers
+        Object.values(this.mgmtBusMarkers).forEach(m => this.managementMap && this.managementMap.removeLayer(m));
+        this.mgmtBusMarkers = {};
 
-        FLEET_ROSTER.forEach(bus => {
-            const parts = bus.coords.split(",");
-            if (parts.length < 2) return;
-            const lat = parseFloat(parts[0]);
-            const lon = parseFloat(parts[1]);
-            if (isNaN(lat) || isNaN(lon)) return;
+        const isSlate = this.currentTheme === "slate";
+        const list = rosterList || FLEET_ROSTER;
+
+        list.forEach(bus => {
+            let lat = bus.lat;
+            let lon = bus.lng;
+
+            if (!lat || !lon) {
+                if (typeof bus.coords === "string") {
+                    const parts = bus.coords.split(",");
+                    if (parts.length >= 2) {
+                        lat = parseFloat(parts[0]);
+                        lon = parseFloat(parts[1]);
+                    }
+                }
+            }
+
+            if (isNaN(lat) || isNaN(lon) || !lat || !lon) return;
 
             const markerHtml = `
-                <div style="background: ${bus.statusType === 'delayed' ? '#f59e0b' : (isSlate ? '#ffffff' : '#3b82f6')}; color: ${isSlate ? '#09090b' : '#ffffff'}; width: 24px; height: 24px; border-radius: 50%; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 2px solid #ffffff;">
+                <div style="background: ${bus.statusType === 'active' ? '#10b981' : (isSlate ? '#3f3f46' : '#94a3b8')}; color: #ffffff; width: 26px; height: 26px; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 2px solid #ffffff;">
                     ${bus.busId.replace('BUS-', '')}
                 </div>
             `;
@@ -289,8 +303,8 @@ const MapService = {
             const icon = L.divIcon({
                 html: markerHtml,
                 className: "fleet-bus-icon",
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
             });
 
             const marker = L.marker([lat, lon], { icon: icon }).addTo(this.managementMap);
@@ -298,10 +312,10 @@ const MapService = {
                 <div style="font-size: 12px; padding: 4px; min-width: 200px;">
                     <strong style="color: #0f172a;">${bus.busId} // ${bus.routeId}</strong>
                     <div style="color: #71717a; font-size: 11px; margin: 3px 0;">
-                        Driver: <strong>${bus.driver}</strong> &bull; Speed: ${bus.speed}
+                        Status: <strong style="color: ${bus.statusType === 'active' ? '#059669' : '#64748b'}">${bus.status}</strong> &bull; Speed: ${bus.speed}
                     </div>
                     <div style="color: #006c4a; font-size: 11px; font-weight: 600;">
-                        Next: ${bus.nextStop} (${bus.eta})
+                        GPS: ${lat.toFixed(4)}, ${lon.toFixed(4)}
                     </div>
                 </div>
             `);

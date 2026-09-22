@@ -134,6 +134,11 @@
                         <span>Track My Bus</span>
                         <span>&rarr;</span>
                     </button>
+                    <div style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+                        <button class="filter-pill-btn" onclick="trackSingleBus('BUS-01')" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Bus 01 (Kaikaluru)</button>
+                        <button class="filter-pill-btn" onclick="trackSingleBus('BUS-02')" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Bus 02 (Ganapavaram)</button>
+                        <button class="filter-pill-btn" onclick="trackSingleBus('BUS-03')" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Bus 03 (Palakollu)</button>
+                    </div>
                 </div>
 
                 <!-- Card 2: Driver Console -->
@@ -173,6 +178,11 @@
                         <span>Open Driver Console</span>
                         <span>&rarr;</span>
                     </button>
+                    <div style="display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+                        <button class="filter-pill-btn" onclick="changeDriverBus('BUS-01'); switchPortalView('driver');" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Drive Bus 01</button>
+                        <button class="filter-pill-btn" onclick="changeDriverBus('BUS-02'); switchPortalView('driver');" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Drive Bus 02</button>
+                        <button class="filter-pill-btn" onclick="changeDriverBus('BUS-03'); switchPortalView('driver');" style="padding: 5px 9px; font-size: 11px; background: var(--canvas-group); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;">Drive Bus 03</button>
+                    </div>
                 </div>
 
                 <!-- Card 3: Fleet Command -->
@@ -214,25 +224,25 @@
 
             </div>
 
-            <!-- Bottom Quick Stats Strip -->
+            <!-- Bottom Quick Stats Strip (Dynamically synced from Firebase Realtime DB) -->
             <div class="clean-stats-strip">
                 <div class="stat-strip-item">
-                    <div class="stat-num">24</div>
-                    <div class="stat-lbl">Active Buses</div>
+                    <div class="stat-num" id="hubTotalBusesCount">3</div>
+                    <div class="stat-lbl">Fleet Buses</div>
                 </div>
                 <div class="stat-strip-item">
-                    <div class="stat-num">18</div>
-                    <div class="stat-lbl">In Transit</div>
+                    <div class="stat-num green" id="hubActiveBusesCount">0</div>
+                    <div class="stat-lbl">Active On Route</div>
                 </div>
                 <div class="stat-strip-item">
-                    <div class="stat-num green">98%</div>
-                    <div class="stat-lbl">On Time</div>
+                    <div class="stat-num" id="hubDepotBusesCount">3</div>
+                    <div class="stat-lbl">In Depot / Standby</div>
                 </div>
                 <div class="stat-strip-item">
-                    <div class="stat-num" style="font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <span class="pulsing-dot"></span> 24/7 Desk
+                    <div class="stat-num" style="font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 6px;" id="hubGpsStatus">
+                        <span class="pulsing-dot"></span> Live Sync
                     </div>
-                    <div class="stat-lbl">Direct Campus Support</div>
+                    <div class="stat-lbl">Firebase RTDB Connected</div>
                 </div>
             </div>
 
@@ -248,23 +258,22 @@
                 <!-- Route Active Header Card -->
                 <div class="route-active-card">
                     <div class="route-badge-box">
-                        <div class="route-number-square" id="studentRouteSquare">12</div>
+                        <div class="route-number-square" id="studentRouteSquare">01</div>
                         <div class="route-title-block">
                             <h2>
-                                <span id="studentRouteHeading">Bus 12 &bull; Bhimavaram RTC &rarr; DNR Campus</span>
-                                <span class="status-pill-live" style="font-size: 11px;">On Schedule</span>
+                                <span id="studentRouteHeading">Bus 01 &bull; Kaikaluru &rarr; DNR Campus</span>
+                                <span class="status-pill-live" id="studentBusStatusPill" style="font-size: 11px;">Depot Standby</span>
                             </h2>
-                            <p id="studentRouteSub">Morning Session &bull; Boarding Point: Somaram Junction</p>
+                            <p id="studentRouteSub">Live Route Stream &bull; Select bus below to track</p>
                         </div>
                     </div>
 
                     <div class="route-actions-block">
-                        <span style="font-size: 13px; color: var(--text-muted);">Switch route:</span>
+                        <span style="font-size: 13px; color: var(--text-muted);">Select Bus:</span>
                         <select id="studentBusSelect" class="select-custom" style="width: auto; padding: 6px 12px; font-size: 12px;" onchange="changeActiveBus(this.value)">
-                            <option value="BUS-12">Route 12 (Bhimavaram RTC)</option>
-                            <option value="BUS-01">Route 1 (Kaikaluru)</option>
-                            <option value="BUS-02">Route 2 (Ganapavaram)</option>
-                            <option value="BUS-03">Route 3 (Palakollu)</option>
+                            <option value="BUS-01">Bus 01 (Kaikaluru &rarr; DNR)</option>
+                            <option value="BUS-02">Bus 02 (Ganapavaram &rarr; DNR)</option>
+                            <option value="BUS-03">Bus 03 (Palakollu &rarr; DNR)</option>
                         </select>
                         <button class="btn-emergency-help" onclick="triggerCallDriver()">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -274,13 +283,13 @@
                 </div>
 
                 <!-- Schedule Status Alert Info Banner -->
-                <div class="status-info-banner">
+                <div class="status-info-banner" id="studentStatusBanner">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        <span>Bus 12 is running smoothly on schedule. Expected arrival at DNR Main Campus Gate by <strong>08:45 AM</strong>.</span>
+                        <span id="studentLiveNoticeText">Connecting to live Firebase stream for this bus...</span>
                     </div>
-                    <div style="font-size: 12px; color: var(--text-muted);">
-                        &bull; GPS synced 1s ago
+                    <div style="font-size: 12px; color: var(--text-muted);" id="studentGpsSyncTime">
+                        &bull; Real-time GPS Listener Active
                     </div>
                 </div>
 
@@ -396,8 +405,8 @@
                         <!-- Route Timeline -->
                         <div class="clean-timeline-card">
                             <div class="clean-timeline-header">
-                                <span>Route 12 Timeline</span>
-                                <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">6 Stops</span>
+                                <span id="studentTimelineTitle">Route Timeline</span>
+                                <span id="studentTimelineStopsCount" style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Stops</span>
                             </div>
 
                             <div class="timeline-stops-container" id="waypointTimelineList">
@@ -428,7 +437,7 @@
             
             <div class="driver-clean-layout">
                 
-                <!-- Driver Top Bar -->
+                <!-- Driver Top Bar with Bus Selector & Real Device GPS -->
                 <div class="driver-clean-topbar">
                     <div class="driver-identity">
                         <div class="steering-icon-square">
@@ -441,25 +450,28 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                                <span>K. Satyanarayana</span>
-                                <span class="gateway-badge" style="margin: 0; padding: 1px 8px; font-size: 11px;">Bus 12</span>
-                            </h3>
-                            <p style="font-size: 12px; color: var(--text-muted);">Route 12: Bhimavaram RTC &rarr; DNR Campus</p>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">SELECT YOUR BUS:</span>
+                                <select id="driverBusSelect" class="select-custom" style="width: auto; padding: 4px 10px; font-size: 13px; font-weight: 700;" onchange="changeDriverBus(this.value)">
+                                    <option value="BUS-01">Bus 01 (Kaikaluru &rarr; DNR)</option>
+                                    <option value="BUS-02">Bus 02 (Ganapavaram &rarr; DNR)</option>
+                                    <option value="BUS-03">Bus 03 (Palakollu &rarr; DNR)</option>
+                                </select>
+                            </div>
+                            <p id="driverRouteSubText" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                Tap 'Start Ride' below to broadcast your device's live GPS to students.
+                            </p>
                         </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <span class="status-pill-live">
-                            <span class="pulsing-dot"></span>
-                            GPS CONNECTED &amp; SYNCED
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span class="status-pill-live" id="driverGpsIndicator" style="background: var(--canvas-group); color: var(--text-muted); border-color: var(--border-default);">
+                            <span class="pulsing-dot" id="driverGpsDot" style="background: var(--text-muted);"></span>
+                            <span id="driverGpsStatusText">GPS Ready (Standby)</span>
                         </span>
                         <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">
                             CURRENT TIME: <strong id="driverTimeDisplay" style="color: var(--text-primary);">08:25 AM</strong>
                         </div>
-                        <button class="btn-pill-action" onclick="triggerCabinChime()">
-                            Dispatch Voice
-                        </button>
                     </div>
                 </div>
 
@@ -575,24 +587,24 @@
                     </div>
                 </div>
 
-                <!-- Tactical Driver Pads (Clean Light) -->
+                <!-- Tactical Driver Pads (Real Device GPS Controls) -->
                 <div class="tactical-pads-clean">
-                    <button class="tactical-btn-clean active-green" id="btnTripRunning" onclick="toggleTripActiveState()">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-emerald);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        <span class="btn-lbl" id="tripRunningTitle">Trip Active</span>
-                        <span class="btn-sub" id="tripRunningSub">Tap to Resume / Refresh</span>
+                    <button class="tactical-btn-clean" id="btnDriverRideToggle" onclick="toggleDriverRideState()" style="border-width: 2px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="rideBtnIcon" style="color: var(--brand-emerald);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="btn-lbl" id="rideBtnTitle" style="font-size: 14px;">Start Ride</span>
+                        <span class="btn-sub" id="rideBtnSub">Broadcast Device GPS</span>
                     </button>
 
                     <button class="tactical-btn-clean" onclick="triggerDelayNotice()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span class="btn-lbl">Delay Alert</span>
-                        <span class="btn-sub">Notify Dispatch &amp; Parents</span>
+                        <span class="btn-lbl">Delay Notice</span>
+                        <span class="btn-sub">Broadcast to Parents</span>
                     </button>
 
                     <button class="tactical-btn-clean" onclick="triggerCabinChime()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span class="btn-lbl">Next Stop Done</span>
-                        <span class="btn-sub">Underground Stop Complete</span>
+                        <span class="btn-lbl">Chime Sound</span>
+                        <span class="btn-sub">In-Cabin Tone</span>
                     </button>
 
                     <button class="tactical-btn-clean sos-card" id="btnSosHold" onmousedown="startSosHold()" onmouseup="cancelSosHold()" onmouseleave="cancelSosHold()" ontouchstart="startSosHold()" ontouchend="cancelSosHold()">
@@ -629,24 +641,24 @@
                     </div>
                 </div>
 
-                <!-- 4 Top KPI Cards -->
+                <!-- 4 Top KPI Cards (Dynamically calculated from Firebase RTDB) -->
                 <div class="fleet-kpis-grid">
                     <div class="fleet-kpi-card-clean">
                         <div class="kpi-main-block">
                             <div class="kpi-title-small">TOTAL FLEET BUSES</div>
-                            <div class="kpi-giant-num">24</div>
-                            <div class="kpi-sub-desc">Full institutional capacity</div>
+                            <div class="kpi-giant-num" id="mgmtTotalBuses">3</div>
+                            <div class="kpi-sub-desc">Active fleet allocation</div>
                         </div>
                         <div class="kpi-right-icon blue">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="12" y1="10" x2="22" y2="10"/></svg>
                         </div>
                     </div>
 
                     <div class="fleet-kpi-card-clean">
                         <div class="kpi-main-block">
                             <div class="kpi-title-small">ACTIVE ON ROUTE</div>
-                            <div class="kpi-giant-num">18</div>
-                            <div class="kpi-sub-desc" style="color: var(--brand-emerald-text);">&bull; 75% deployed</div>
+                            <div class="kpi-giant-num" id="mgmtActiveBuses" style="color: var(--brand-emerald-text);">0</div>
+                            <div class="kpi-sub-desc" id="mgmtActiveSub">&bull; Waiting for driver GPS</div>
                         </div>
                         <div class="kpi-right-icon green">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -655,9 +667,9 @@
 
                     <div class="fleet-kpi-card-clean">
                         <div class="kpi-main-block">
-                            <div class="kpi-title-small">ON SCHEDULE</div>
-                            <div class="kpi-giant-num">94.2%</div>
-                            <div class="kpi-sub-desc">2 delayed due to canal works</div>
+                            <div class="kpi-title-small">IN DEPOT / STANDBY</div>
+                            <div class="kpi-giant-num" id="mgmtDepotBuses">3</div>
+                            <div class="kpi-sub-desc">Offline units ready at yard</div>
                         </div>
                         <div class="kpi-right-icon purple">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
@@ -666,12 +678,12 @@
 
                     <div class="fleet-kpi-card-clean">
                         <div class="kpi-main-block">
-                            <div class="kpi-title-small">DRIVERS ON DUTY</div>
-                            <div class="kpi-giant-num">18 <small style="font-size: 18px; font-weight: normal; color: var(--text-muted);">/ 18</small></div>
-                            <div class="kpi-sub-desc">100% check-in verified</div>
+                            <div class="kpi-title-small">FIREBASE SYNC</div>
+                            <div class="kpi-giant-num" id="mgmtSyncStatus" style="font-size: 24px; color: var(--brand-cobalt);">LIVE</div>
+                            <div class="kpi-sub-desc">Real-time DB stream</div>
                         </div>
                         <div class="kpi-right-icon teal">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
                         </div>
                     </div>
                 </div>
@@ -821,12 +833,17 @@
     <!-- Toast Notifications Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Scripts -->
+    <!-- Firebase Realtime Database SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Leaflet GIS Engine Script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Application Services -->
     <script src="js/routes-data.js"></script>
     <script src="js/audio-service.js"></script>
     <script src="js/firebase-config.js"></script>
-    <script src="js/simulator.js"></script>
     <script src="js/map-service.js"></script>
     <script src="js/app.js"></script>
 
