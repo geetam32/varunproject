@@ -87,7 +87,7 @@
         <section id="portalHubView" class="clarity-view active-view">
             
             <!-- Hero Introduction -->
-            <div class="hub-clean-hero">
+            <div class="hub-clean-hero anim-fade-up anim-stagger-1">
                 <div class="gateway-badge">
                     <span>🚌 Official Transportation Gateway</span>
                 </div>
@@ -101,7 +101,7 @@
             <div class="clean-cards-grid">
                 
                 <!-- Card 1: Student & Parent -->
-                <div class="clean-portal-card">
+                <div class="clean-portal-card anim-fade-up anim-stagger-2">
                     <div>
                         <div class="card-icon-box blue">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -142,7 +142,7 @@
                 </div>
 
                 <!-- Card 2: Driver Console -->
-                <div class="clean-portal-card">
+                <div class="clean-portal-card anim-fade-up anim-stagger-3">
                     <div>
                         <div class="card-icon-box green">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -186,7 +186,7 @@
                 </div>
 
                 <!-- Card 3: Fleet Command -->
-                <div class="clean-portal-card">
+                <div class="clean-portal-card anim-fade-up anim-stagger-4">
                     <div>
                         <div class="card-icon-box purple">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -225,7 +225,7 @@
             </div>
 
             <!-- Bottom Quick Stats Strip (Dynamically synced from Firebase Realtime DB) -->
-            <div class="clean-stats-strip">
+            <div class="clean-stats-strip anim-fade-up anim-stagger-5">
                 <div class="stat-strip-item">
                     <div class="stat-num" id="hubTotalBusesCount">3</div>
                     <div class="stat-lbl">Fleet Buses</div>
@@ -256,7 +256,7 @@
             <div class="student-clean-layout">
                 
                 <!-- Route Active Header Card -->
-                <div class="route-active-card">
+                <div class="route-active-card anim-fade-up anim-stagger-1">
                     <div class="route-badge-box">
                         <div class="route-number-square" id="studentRouteSquare">01</div>
                         <div class="route-title-block">
@@ -283,7 +283,7 @@
                 </div>
 
                 <!-- Schedule Status Alert Info Banner -->
-                <div class="status-info-banner" id="studentStatusBanner">
+                <div class="status-info-banner anim-fade-up anim-stagger-2" id="studentStatusBanner">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         <span id="studentLiveNoticeText">Connecting to live Firebase stream for this bus...</span>
@@ -298,7 +298,7 @@
                     
                     <!-- Left: Clean Map & Comfort Cards -->
                     <div>
-                        <div class="clean-map-card">
+                        <div class="clean-map-card anim-fade-up anim-stagger-3">
                             <div class="clean-map-header">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span class="pulsing-dot"></span>
@@ -320,7 +320,7 @@
                         </div>
 
                         <!-- 3 Comfort Cards -->
-                        <div class="comfort-metrics-grid">
+                        <div class="comfort-metrics-grid anim-fade-up anim-stagger-4">
                             <div class="comfort-card">
                                 <div class="comfort-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -360,7 +360,7 @@
                     <div class="student-right-rail">
                         
                         <!-- Arrival Countdown Card -->
-                        <div class="arrival-estimate-card">
+                        <div class="arrival-estimate-card anim-fade-up anim-stagger-2">
                             <div class="arrival-tag">LIVE ARRIVAL ESTIMATE</div>
                             <div class="arrival-huge-text" id="cleanCountdownNumber">
                                 8 <span>mins away</span>
@@ -382,7 +382,7 @@
                         </div>
 
                         <!-- Driver Info Card -->
-                        <div class="clean-driver-card">
+                        <div class="clean-driver-card anim-fade-up anim-stagger-3">
                             <div class="driver-top-flex">
                                 <div class="driver-info-left">
                                     <div class="driver-avatar-circle" id="cleanDriverInitials">KS</div>
@@ -403,7 +403,7 @@
                         </div>
 
                         <!-- Route Timeline -->
-                        <div class="clean-timeline-card">
+                        <div class="clean-timeline-card anim-fade-up anim-stagger-4">
                             <div class="clean-timeline-header">
                                 <span id="studentTimelineTitle">Route Timeline</span>
                                 <span id="studentTimelineStopsCount" style="font-size: 12px; color: var(--text-muted); font-weight: normal;">Stops</span>
@@ -415,7 +415,7 @@
                         </div>
 
                         <!-- Helpdesk -->
-                        <div style="background: var(--canvas-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-card);">
+                        <div class="anim-fade-up anim-stagger-5" style="background: var(--canvas-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-card);">
                             <div>
                                 <h5 style="font-size: 13px; font-weight: 700; color: var(--text-primary);">DNR Transit Helpdesk</h5>
                                 <p style="font-size: 11px; color: var(--text-muted);">+91 8816 221234 (Ext 104)</p>
@@ -438,7 +438,7 @@
             <div class="driver-clean-layout">
                 
                 <!-- Driver Top Bar with Bus Selector & Real Device GPS -->
-                <div class="driver-clean-topbar">
+                <div class="driver-clean-topbar anim-fade-up anim-stagger-1">
                     <div class="driver-identity">
                         <div class="steering-icon-square">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -479,7 +479,7 @@
                 <div class="guidance-speed-grid">
                     
                     <!-- Turn Guidance Box -->
-                    <div class="guidance-box-card">
+                    <div class="guidance-box-card anim-fade-up anim-stagger-2">
                         <div>
                             <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--brand-emerald-text); font-weight: 700; margin-bottom: 12px;">
                                 <span>LIVE NAVIGATION GUIDANCE</span>
@@ -517,7 +517,7 @@
                     </div>
 
                     <!-- Speedometer Clean Card -->
-                    <div class="speed-clean-card">
+                    <div class="speed-clean-card anim-fade-up anim-stagger-2">
                         <div class="speed-headline-row">
                             <span>CURRENT SPEED</span>
                             <span class="status-pill-live" style="font-size: 10px; padding: 2px 8px;">Smooth Traffic</span>
@@ -547,7 +547,7 @@
                 </div>
 
                 <!-- 3 Upcoming Route Stops Cards -->
-                <div class="driver-stops-row">
+                <div class="driver-stops-row anim-fade-up anim-stagger-3">
                     <div class="driver-stop-card">
                         <div class="stop-tag-flex">
                             <span class="stop-tag-black">NEXT STOP</span>
@@ -588,7 +588,7 @@
                 </div>
 
                 <!-- Tactical Driver Pads (Real Device GPS Controls) -->
-                <div class="tactical-pads-clean">
+                <div class="tactical-pads-clean anim-fade-up anim-stagger-4">
                     <button class="tactical-btn-clean" id="btnDriverRideToggle" onclick="toggleDriverRideState()" style="border-width: 2px;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="rideBtnIcon" style="color: var(--brand-emerald);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         <span class="btn-lbl" id="rideBtnTitle" style="font-size: 14px;">Start Ride</span>
@@ -625,7 +625,7 @@
             <div class="management-clean-layout">
                 
                 <!-- Operations Center Header -->
-                <div class="fleet-center-header">
+                <div class="fleet-center-header anim-fade-up anim-stagger-1">
                     <div class="fleet-center-text">
                         <h2>Fleet Operations Center</h2>
                         <p>Real-time telemetry, live feeder tracking, and instant safety dispatch for West Godavari routes.</p>
@@ -642,7 +642,7 @@
                 </div>
 
                 <!-- 4 Top KPI Cards (Dynamically calculated from Firebase RTDB) -->
-                <div class="fleet-kpis-grid">
+                <div class="fleet-kpis-grid anim-fade-up anim-stagger-2">
                     <div class="fleet-kpi-card-clean">
                         <div class="kpi-main-block">
                             <div class="kpi-title-small">TOTAL FLEET BUSES</div>
@@ -689,7 +689,7 @@
                 </div>
 
                 <!-- GIS Corridor Map & Safety Desk -->
-                <div class="management-gis-grid">
+                <div class="management-gis-grid anim-fade-up anim-stagger-3">
                     
                     <!-- Left: Feeder Corridor Live GIS -->
                     <div class="management-map-card">
@@ -776,7 +776,7 @@
                 </div>
 
                 <!-- Full Fleet Roster Table -->
-                <div class="clean-roster-card">
+                <div class="clean-roster-card anim-fade-up anim-stagger-4">
                     <div class="clean-roster-toolbar">
                         <input type="text" id="rosterSearchInput" class="clean-search-input" placeholder="Search by bus #, driver, or route..." onkeyup="filterFleetRoster(this.value)">
 

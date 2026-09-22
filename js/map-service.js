@@ -234,13 +234,15 @@ const MapService = {
         const heading = data.heading || 0;
         const code = (BUS_ROUTES[busId] && BUS_ROUTES[busId].displayCode) || busId;
         const isSlate = this.currentTheme === "slate";
+        const isLive = data.status === "ACTIVE" || data.status === "RUNNING";
 
         const markerHtml = `
             <div style="position: relative; width: 140px; transform: translate(-50%, -50%); text-align: center;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: ${isSlate ? '#09090b' : '#3b82f6'}; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 14px ${isSlate ? 'rgba(255,255,255,0.8)' : 'rgba(59,130,246,0.6)'}; transform: rotate(${heading}deg);">
+                <div class="bus-radar-halo ${isLive ? 'active-broadcasting' : ''}"></div>
+                <div style="position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: ${isSlate ? '#09090b' : '#3b82f6'}; border: 2px solid #ffffff; border-radius: 50%; box-shadow: 0 0 14px ${isSlate ? 'rgba(255,255,255,0.8)' : 'rgba(59,130,246,0.6)'}; transform: rotate(${heading}deg); transition: transform 0.3s ease;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
                 </div>
-                <div style="margin-top: 4px; background: ${isSlate ? '#131315' : '#ffffff'}; border: 1px solid ${isSlate ? 'rgba(255,255,255,0.3)' : '#e4e4e7'}; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: ${isSlate ? '#ffffff' : '#0f172a'}; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                <div style="position: relative; z-index: 2; margin-top: 4px; background: ${isSlate ? '#131315' : '#ffffff'}; border: 1px solid ${isSlate ? 'rgba(255,255,255,0.3)' : '#e4e4e7'}; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: ${isSlate ? '#ffffff' : '#0f172a'}; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s ease;">
                     ${code} &bull; ${speed} km/h
                 </div>
             </div>
@@ -294,9 +296,13 @@ const MapService = {
 
             if (isNaN(lat) || isNaN(lon) || !lat || !lon) return;
 
+            const isLive = bus.statusType === 'active';
             const markerHtml = `
-                <div style="background: ${bus.statusType === 'active' ? '#10b981' : (isSlate ? '#3f3f46' : '#94a3b8')}; color: #ffffff; width: 26px; height: 26px; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 2px solid #ffffff;">
-                    ${bus.busId.replace('BUS-', '')}
+                <div style="position: relative; width: 26px; height: 26px;">
+                    <div class="mgmt-radar-halo ${isLive ? 'active' : ''}"></div>
+                    <div style="position: relative; z-index: 2; background: ${isLive ? '#10b981' : (isSlate ? '#3f3f46' : '#94a3b8')}; color: #ffffff; width: 26px; height: 26px; border-radius: 50%; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 2px solid #ffffff;">
+                        ${bus.busId.replace('BUS-', '')}
+                    </div>
                 </div>
             `;
 

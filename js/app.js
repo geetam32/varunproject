@@ -69,6 +69,13 @@ function applyStyleTheme(theme) {
     const icon = document.getElementById("themeToggleIcon");
     const label = document.getElementById("themeToggleText");
 
+    if (icon) {
+        icon.classList.remove("theme-spin");
+        void icon.offsetWidth;
+        icon.classList.add("theme-spin");
+        setTimeout(() => icon.classList.remove("theme-spin"), 600);
+    }
+
     if (theme === "slate") {
         body.classList.add("theme-slate");
         if (icon) icon.innerText = "☀️";
@@ -105,14 +112,18 @@ function switchPortalView(portalKey) {
         }
     }
 
-    // Hide all views and reveal active view
+    // Hide all views and reveal active view with cascading animation
     document.querySelectorAll(".clarity-view").forEach(view => view.classList.remove("active-view"));
     const targetView = document.getElementById(
         portalKey === "hub" ? "portalHubView" :
         portalKey === "student" ? "studentPortalView" :
         portalKey === "driver" ? "driverPortalView" : "managementPortalView"
     );
-    if (targetView) targetView.classList.add("active-view");
+    if (targetView) {
+        targetView.classList.remove("active-view");
+        void targetView.offsetWidth; // force reflow to replay entrance animation
+        targetView.classList.add("active-view");
+    }
 
     // Audio click feedback
     if (typeof AudioService !== "undefined" && !isAudioMuted) {
@@ -365,10 +376,22 @@ function handleDriverGpsError(err) {
 
 function updateDriverSpeedometer(speed) {
     const numEl = document.getElementById("cockpitSpeedNumber");
-    if (numEl) numEl.innerHTML = `${speed} <span>km/h</span>`;
+    if (numEl) {
+        numEl.innerHTML = `${speed} <span>km/h</span>`;
+        numEl.classList.remove("num-pop");
+        void numEl.offsetWidth;
+        numEl.classList.add("num-pop");
+        setTimeout(() => numEl.classList.remove("num-pop"), 350);
+    }
 
     const studentSpeed = document.getElementById("studentSpeedText");
-    if (studentSpeed) studentSpeed.innerText = `${speed} km/h`;
+    if (studentSpeed) {
+        studentSpeed.innerText = `${speed} km/h`;
+        studentSpeed.classList.remove("num-pop");
+        void studentSpeed.offsetWidth;
+        studentSpeed.classList.add("num-pop");
+        setTimeout(() => studentSpeed.classList.remove("num-pop"), 350);
+    }
 }
 
 function triggerDelayNotice() {
@@ -575,6 +598,10 @@ function handleStudentBusTelemetryUpdate(telemetry) {
 
         if (arrivalHuge) {
             arrivalHuge.innerHTML = `${etaMins} <span>mins away</span>`;
+            arrivalHuge.classList.remove("num-pop");
+            void arrivalHuge.offsetWidth;
+            arrivalHuge.classList.add("num-pop");
+            setTimeout(() => arrivalHuge.classList.remove("num-pop"), 350);
         }
         if (arrivalStop) {
             arrivalStop.innerHTML = `Distance to Campus: <strong>${distKm.toFixed(1)} km</strong> &bull; Speed: <strong>${speedKmh} km/h</strong>`;
