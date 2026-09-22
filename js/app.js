@@ -93,7 +93,12 @@ function switchPortalView(portalKey) {
         portalKey === "student" ? "tabBtnStudent" :
         portalKey === "driver" ? "tabBtnDriver" : "tabBtnManagement"
     );
-    if (activeTab) activeTab.classList.add("active");
+    if (activeTab) {
+        activeTab.classList.add("active");
+        if (typeof activeTab.scrollIntoView === "function") {
+            activeTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+    }
 
     // Hide all views and reveal active view
     document.querySelectorAll(".clarity-view").forEach(view => view.classList.remove("active-view"));
@@ -129,6 +134,23 @@ function switchPortalView(portalKey) {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+// Mobile window resize & orientation change handler
+window.addEventListener("resize", () => {
+    if (typeof MapService !== "undefined") {
+        if (MapService.map) MapService.map.invalidateSize();
+        if (MapService.managementMap) MapService.managementMap.invalidateSize();
+    }
+});
+
+window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+        if (typeof MapService !== "undefined") {
+            if (MapService.map) MapService.map.invalidateSize();
+            if (MapService.managementMap) MapService.managementMap.invalidateSize();
+        }
+    }, 200);
+});
 
 // ==========================================================================
 // 3. LIVE CLOCK & TICKER

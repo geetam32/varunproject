@@ -1643,31 +1643,578 @@ body.theme-slate .filter-pill-btn.active {
     color: var(--text-primary);
 }
 
-/* Responsive Media Queries */
-@media (max-width: 1200px) {
-    .clean-cards-grid { grid-template-columns: 1fr; }
-    .student-dual-column { grid-template-columns: 1fr; }
-    .guidance-speed-grid { grid-template-columns: 1fr; }
-    .management-gis-grid { grid-template-columns: 1fr; }
-    .fleet-kpis-grid { grid-template-columns: repeat(2, 1fr); }
-    .clean-stats-strip { grid-template-columns: repeat(2, 1fr); }
+/* --------------------------------------------------------------------------
+   8. TOAST NOTIFICATIONS & OVERLAYS
+   -------------------------------------------------------------------------- */
+
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    pointer-events: none;
 }
 
-@media (max-width: 768px) {
-    .clarity-header-inner {
-        flex-direction: column;
-        height: auto;
-        padding: 1rem;
-        gap: 12px;
+.toast-container > * {
+    pointer-events: auto;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   9. MOBILE RESPONSIVE ARCHITECTURE
+   Breakpoints:
+   - <= 1200px: Small desktops & landscape tablets
+   - <= 992px:  Tablets portrait & hybrid devices
+   - <= 768px:  Phablets & large mobile phones
+   - <= 480px:  Standard mobile phones (iPhone 14/15, Galaxy S23)
+   - <= 360px:  Compact mobile screens (iPhone SE)
+   -------------------------------------------------------------------------- */
+
+/* Touch Device Optimization */
+@media (hover: none) and (pointer: coarse) {
+    .clarity-nav-tab,
+    .btn-dark-pill,
+    .btn-style-switcher,
+    .btn-emergency-help,
+    .btn-call-blue,
+    .tactical-btn-clean,
+    .filter-pill-btn,
+    .btn-pill-action {
+        touch-action: manipulation;
+    }
+}
+
+/* Tablet & Medium Screens (<= 1200px) */
+@media (max-width: 1200px) {
+    .clean-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    .clean-cards-grid .clean-portal-card:last-child {
+        grid-column: span 2;
+    }
+    .student-dual-column {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .guidance-speed-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .management-gis-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .fleet-kpis-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    .clean-stats-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    .stat-strip-item:nth-child(2) {
+        border-right: none;
+    }
+}
+
+/* Tablet Portrait & Large Phones (<= 992px) */
+@media (max-width: 992px) {
+    .clean-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    .clean-cards-grid .clean-portal-card:last-child {
+        grid-column: auto;
+    }
+    .driver-stops-row {
+        grid-template-columns: 1fr;
+    }
+    .comfort-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile Devices (<= 768px) */
+@media (max-width: 768px) {
+    /* 1. Header Navigation Bar */
+    .clarity-header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .clarity-header-inner {
+        height: auto;
+        padding: 0.75rem 1rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: 
+            "brand controls"
+            "nav nav";
+        row-gap: 0.75rem;
+        column-gap: 0.5rem;
+    }
+
+    .clarity-brand {
+        grid-area: brand;
+        gap: 10px;
+    }
+
+    .brand-bus-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .brand-text-block h1 {
+        font-size: 14px;
+    }
+
+    .brand-text-block p {
+        font-size: 10px;
+    }
+
+    .clarity-header-right {
+        grid-area: controls;
+        gap: 8px;
+    }
+
+    .status-pill-live {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .btn-style-switcher {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+
+    .user-avatar-pill {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    /* Swipeable Segmented Capsule Tabs */
     .clarity-nav-segmented {
+        grid-area: nav;
         width: 100%;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 3px;
+        justify-content: flex-start;
+        border-radius: var(--radius-pill);
     }
-    .comfort-metrics-grid { grid-template-columns: 1fr; }
-    .driver-stops-row { grid-template-columns: 1fr; }
-    .tactical-pads-clean { grid-template-columns: repeat(2, 1fr); }
-    .fleet-kpis-grid { grid-template-columns: 1fr; }
-    .clean-stats-strip { grid-template-columns: 1fr; }
-    .clean-search-input { width: 100%; }
+
+    .clarity-nav-segmented::-webkit-scrollbar {
+        display: none;
+    }
+
+    .clarity-nav-tab {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
+    /* 2. Main Viewport */
+    .clarity-viewport {
+        padding: 1rem 0.875rem;
+    }
+
+    /* 3. Screen 1: Portal Hub */
+    .hub-clean-hero {
+        margin: 0.5rem auto 1.5rem;
+        padding: 0 0.5rem;
+    }
+
+    .hub-clean-hero h1 {
+        font-size: 26px;
+        line-height: 1.25;
+        margin-bottom: 8px;
+    }
+
+    .hub-clean-hero p {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .clean-portal-card {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .clean-portal-card h2 {
+        font-size: 18px;
+    }
+
+    .card-bullets-list {
+        margin-bottom: 1.5rem;
+        gap: 8px;
+    }
+
+    .btn-dark-pill {
+        min-height: 44px;
+        font-size: 13px;
+    }
+
+    .clean-stats-strip {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 1.25rem 1rem;
+        gap: 1rem;
+    }
+
+    .stat-strip-item {
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 0.75rem;
+    }
+
+    .stat-strip-item:nth-child(2) {
+        border-right: none;
+    }
+
+    .stat-strip-item:nth-last-child(-n+2) {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .stat-strip-item .stat-num {
+        font-size: 26px;
+    }
+
+    /* 4. Screen 2: Student & Parent */
+    .route-active-card {
+        padding: 1rem 1.25rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .route-badge-box {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .route-number-square {
+        width: 38px;
+        height: 38px;
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+
+    .route-title-block h2 {
+        font-size: 15px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .route-title-block p {
+        font-size: 12px;
+    }
+
+    .route-actions-block {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .route-actions-block select {
+        flex: 1 1 180px;
+        min-height: 40px;
+        width: auto !important;
+    }
+
+    .btn-emergency-help {
+        min-height: 40px;
+        padding: 6px 14px;
+        justify-content: center;
+        flex-grow: 1;
+    }
+
+    .status-info-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px 14px;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .clean-map-view {
+        height: 300px;
+    }
+
+    .clean-map-legend {
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        padding: 8px 14px;
+        font-size: 11px;
+    }
+
+    .comfort-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .comfort-card {
+        padding: 0.875rem 1rem;
+    }
+
+    .arrival-estimate-card {
+        padding: 1.25rem;
+    }
+
+    .arrival-huge-text {
+        font-size: 38px;
+    }
+
+    .clean-driver-card {
+        padding: 1rem 1.25rem;
+    }
+
+    .driver-top-flex {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .btn-call-blue {
+        width: 100%;
+        justify-content: center;
+        min-height: 42px;
+    }
+
+    .clean-timeline-card {
+        padding: 1.25rem 1rem;
+    }
+
+    /* 5. Screen 3: Driver Console */
+    .driver-clean-topbar {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .guidance-box-card {
+        padding: 1.25rem;
+    }
+
+    .turn-instruction-row {
+        gap: 12px;
+        margin-bottom: 1.25rem;
+    }
+
+    .turn-arrow-black {
+        width: 52px;
+        height: 52px;
+    }
+
+    .turn-text-content h2 {
+        font-size: 20px;
+        line-height: 1.25;
+    }
+
+    .speed-clean-card {
+        padding: 1.25rem;
+    }
+
+    .huge-speed-number {
+        font-size: 56px;
+        margin: 0.5rem 0;
+    }
+
+    .tactical-pads-clean {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .tactical-btn-clean {
+        padding: 1rem 0.75rem;
+        min-height: 68px;
+    }
+
+    .tactical-btn-clean .btn-lbl {
+        font-size: 13px;
+    }
+
+    /* 6. Screen 4: Management & Fleet Command */
+    .fleet-center-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .fleet-center-text h2 {
+        font-size: 22px;
+    }
+
+    .fleet-top-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .fleet-top-actions button {
+        flex: 1;
+        text-align: center;
+        padding: 10px 12px;
+        font-size: 12px;
+        min-height: 40px;
+    }
+
+    .fleet-kpis-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .fleet-kpi-card-clean {
+        padding: 1rem;
+    }
+
+    .kpi-main-block .kpi-giant-num {
+        font-size: 28px;
+    }
+
+    .management-canvas-area {
+        height: 300px;
+    }
+
+    .management-map-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 14px;
+    }
+
+    .management-map-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 14px;
+        font-size: 11px;
+    }
+
+    .clean-roster-card {
+        padding: 1rem;
+    }
+
+    .clean-roster-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .clean-search-input {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .clean-filter-pills {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 4px;
+        justify-content: flex-start;
+    }
+
+    .clean-filter-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-pill-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .clean-table {
+        min-width: 680px;
+    }
+
+    /* 7. Footer */
+    .clarity-footer {
+        padding: 1.25rem 1rem;
+        margin-top: 2rem;
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    }
+
+    .clarity-footer-inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .clarity-footer-inner div:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 16px;
+    }
+
+    .clarity-footer a {
+        margin-left: 0;
+    }
+
+    /* 8. Toast on Mobile */
+    .toast-container {
+        bottom: max(16px, env(safe-area-inset-bottom));
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+}
+
+/* Small Mobile Screens (<= 480px) */
+@media (max-width: 480px) {
+    .clarity-header-right .status-pill-live span:last-child {
+        display: none;
+    }
+
+    .hub-clean-hero h1 {
+        font-size: 23px;
+    }
+
+    .clean-stats-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-strip-item {
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 0.75rem;
+    }
+
+    .stat-strip-item:last-child {
+        border-bottom: none;
+    }
+
+    .tactical-pads-clean {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-kpis-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .clean-map-view,
+    .management-canvas-area {
+        height: 270px;
+    }
 }
