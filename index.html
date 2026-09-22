@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNR College Bus Transit | Campus Fleet Network</title>
+    <meta name="description" content="Campus Transit Clarity - Official real-time transportation gateway and fleet management for DNR College, Bhimavaram.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f172a%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22%23ffffff%22>D</text></svg>">
+
+    <!-- Leaflet GIS Engine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Stitch Typography (Manrope & JetBrains Mono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- =========================================================
+         TOP CLARITY APP HEADER
+         ========================================================= -->
+    <header class="clarity-header">
+        <div class="clarity-header-inner">
+            
+            <!-- Brand Anchor -->
+            <a href="javascript:void(0)" onclick="switchPortalView('hub')" class="clarity-brand" title="DNR College Campus Transport">
+                <div class="brand-bus-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                </div>
+                <div class="brand-text-block">
+                    <h1>DNR College</h1>
+                    <p>Campus Transport</p>
+                </div>
+            </a>
+
+            <!-- Center Navigation Segmented Capsule -->
+            <nav class="clarity-nav-segmented" aria-label="Portal Selection">
+                <button class="clarity-nav-tab active" id="tabBtnHub" onclick="switchPortalView('hub')">
+                    Portal Hub
+                </button>
+                <button class="clarity-nav-tab" id="tabBtnStudent" onclick="switchPortalView('student')">
+                    Student &amp; Parent
+                </button>
+                <button class="clarity-nav-tab" id="tabBtnDriver" onclick="switchPortalView('driver')">
+                    Driver Console
+                </button>
+                <button class="clarity-nav-tab" id="tabBtnManagement" onclick="switchPortalView('management')">
+                    Fleet Management
+                </button>
+            </nav>
+
+            <!-- Right Controls: Status, Style Switcher & Avatar -->
+            <div class="clarity-header-right">
+                
+                <div class="status-pill-live">
+                    <span class="pulsing-dot"></span>
+                    <span>Bhimavaram Live</span>
+                </div>
+
+                <!-- Theme Style Switcher (Clarity Light vs Slate Dark) -->
+                <button class="btn-style-switcher" id="btnThemeToggle" onclick="toggleStyleTheme()" title="Switch Design Style (Clarity Light ⇄ Slate Dark)">
+                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleText">Slate Dark</span>
+                </button>
+
+                <div class="user-avatar-pill" title="Student Session: Varun Teja">
+                    VT
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Content Viewport -->
+    <main class="clarity-viewport">
+
+        <!-- =========================================================
+             SCREEN 1: PORTAL HUB (CAMPUS TRANSIT CLARITY)
+             ========================================================= -->
+        <section id="portalHubView" class="clarity-view active-view">
+            
+            <!-- Hero Introduction -->
+            <div class="hub-clean-hero">
+                <div class="gateway-badge">
+                    <span>🚌 Official Transportation Gateway</span>
+                </div>
+                <h1>DNR College Bus Transit</h1>
+                <p>
+                    Track campus buses in real-time, navigate routes, or manage the institutional transportation fleet.
+                </p>
+            </div>
+
+            <!-- 3 Clean White Elevated Cards -->
+            <div class="clean-cards-grid">
+                
+                <!-- Card 1: Student & Parent -->
+                <div class="clean-portal-card">
+                    <div>
+                        <div class="card-icon-box blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                        </div>
+                        <h2>Student &amp; Parent</h2>
+                        <p class="card-desc">
+                            Designed for daily commuters and parents to monitor morning &amp; evening college trips effortlessly.
+                        </p>
+
+                        <ul class="card-bullets-list">
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Track campus bus in real-time</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>View stop countdown &amp; live ETAs</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Instant arrival alerts &amp; route schedule</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button class="btn-dark-pill" onclick="switchPortalView('student')">
+                        <span>Track My Bus</span>
+                        <span>&rarr;</span>
+                    </button>
+                </div>
+
+                <!-- Card 2: Driver Console -->
+                <div class="clean-portal-card">
+                    <div>
+                        <div class="card-icon-box green">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="m4.93 4.93 4.24 4.24"/>
+                                <path d="m14.83 9.17 4.24-4.24"/>
+                                <path d="M12 15v7"/>
+                            </svg>
+                        </div>
+                        <h2>Driver Console</h2>
+                        <p class="card-desc">
+                            Distraction-free in-cab assistant designed for certified drivers handling transit schedules.
+                        </p>
+
+                        <ul class="card-bullets-list">
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Clean simplified GPS navigation</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Passenger stop list &amp; timeline</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>One-tap SOS and quick status update</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button class="btn-dark-pill" onclick="switchPortalView('driver')">
+                        <span>Open Driver Console</span>
+                        <span>&rarr;</span>
+                    </button>
+                </div>
+
+                <!-- Card 3: Fleet Command -->
+                <div class="clean-portal-card">
+                    <div>
+                        <div class="card-icon-box purple">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M3 9h18"/>
+                                <path d="M9 21V9"/>
+                            </svg>
+                        </div>
+                        <h2>Fleet Command</h2>
+                        <p class="card-desc">
+                            Administrative management desk for college logistics, vehicle rosters, and safety coordination.
+                        </p>
+
+                        <ul class="card-bullets-list">
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Comprehensive real-time fleet map</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Route dispatch &amp; vehicle allocation</span>
+                            </li>
+                            <li>
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Schedule monitoring &amp; safety desk</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button class="btn-dark-pill" onclick="switchPortalView('management')">
+                        <span>Open Fleet Command</span>
+                        <span>&rarr;</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Bottom Quick Stats Strip -->
+            <div class="clean-stats-strip">
+                <div class="stat-strip-item">
+                    <div class="stat-num">24</div>
+                    <div class="stat-lbl">Active Buses</div>
+                </div>
+                <div class="stat-strip-item">
+                    <div class="stat-num">18</div>
+                    <div class="stat-lbl">In Transit</div>
+                </div>
+                <div class="stat-strip-item">
+                    <div class="stat-num green">98%</div>
+                    <div class="stat-lbl">On Time</div>
+                </div>
+                <div class="stat-strip-item">
+                    <div class="stat-num" style="font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span class="pulsing-dot"></span> 24/7 Desk
+                    </div>
+                    <div class="stat-lbl">Direct Campus Support</div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- =========================================================
+             SCREEN 2: STUDENT & PARENT PORTAL (CAMPUS TRANSIT CLARITY)
+             ========================================================= -->
+        <section id="studentPortalView" class="clarity-view">
+            
+            <div class="student-clean-layout">
+                
+                <!-- Route Active Header Card -->
+                <div class="route-active-card">
+                    <div class="route-badge-box">
+                        <div class="route-number-square" id="studentRouteSquare">12</div>
+                        <div class="route-title-block">
+                            <h2>
+                                <span id="studentRouteHeading">Bus 12 &bull; Bhimavaram RTC &rarr; DNR Campus</span>
+                                <span class="status-pill-live" style="font-size: 11px;">On Schedule</span>
+                            </h2>
+                            <p id="studentRouteSub">Morning Session &bull; Boarding Point: Somaram Junction</p>
+                        </div>
+                    </div>
+
+                    <div class="route-actions-block">
+                        <span style="font-size: 13px; color: var(--text-muted);">Switch route:</span>
+                        <select id="studentBusSelect" class="select-custom" style="width: auto; padding: 6px 12px; font-size: 12px;" onchange="changeActiveBus(this.value)">
+                            <option value="BUS-12">Route 12 (Bhimavaram RTC)</option>
+                            <option value="BUS-01">Route 1 (Kaikaluru)</option>
+                            <option value="BUS-02">Route 2 (Ganapavaram)</option>
+                            <option value="BUS-03">Route 3 (Palakollu)</option>
+                        </select>
+                        <button class="btn-emergency-help" onclick="triggerCallDriver()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Emergency Help
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Schedule Status Alert Info Banner -->
+                <div class="status-info-banner">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span>Bus 12 is running smoothly on schedule. Expected arrival at DNR Main Campus Gate by <strong>08:45 AM</strong>.</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted);">
+                        &bull; GPS synced 1s ago
+                    </div>
+                </div>
+
+                <!-- Main Two-Column Layout -->
+                <div class="student-dual-column">
+                    
+                    <!-- Left: Clean Map & Comfort Cards -->
+                    <div>
+                        <div class="clean-map-card">
+                            <div class="clean-map-header">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="pulsing-dot"></span>
+                                    <span>Live GPS Navigation Map</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    Speed: <strong id="studentSpeedText" style="color: var(--text-primary);">38 km/h</strong>
+                                </div>
+                            </div>
+
+                            <!-- Leaflet Map Container -->
+                            <div id="studentMap" class="clean-map-view"></div>
+
+                            <div class="clean-map-legend">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--brand-cobalt);"></span> Live Bus</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong);"></span> Traversed</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--brand-emerald);"></span> Campus Gate</span>
+                            </div>
+                        </div>
+
+                        <!-- 3 Comfort Cards -->
+                        <div class="comfort-metrics-grid">
+                            <div class="comfort-card">
+                                <div class="comfort-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div class="comfort-details">
+                                    <div class="lbl">Bus Occupancy</div>
+                                    <div class="val" id="cleanOccupancyVal">36 / 48 Seats</div>
+                                    <div class="sub">Moderate &bull; Seats Free</div>
+                                </div>
+                            </div>
+
+                            <div class="comfort-card">
+                                <div class="comfort-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                                </div>
+                                <div class="comfort-details">
+                                    <div class="lbl">Trip Status</div>
+                                    <div class="val">Normal Morning</div>
+                                    <div class="sub">Departed 08:00 AM</div>
+                                </div>
+                            </div>
+
+                            <div class="comfort-card">
+                                <div class="comfort-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+                                </div>
+                                <div class="comfort-details">
+                                    <div class="lbl">In-Bus Comfort</div>
+                                    <div class="val" id="cleanComfortVal">23.5°C Ambient</div>
+                                    <div class="sub">Ventilation Active</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Rail: Arrival Countdown, Driver, Timeline -->
+                    <div class="student-right-rail">
+                        
+                        <!-- Arrival Countdown Card -->
+                        <div class="arrival-estimate-card">
+                            <div class="arrival-tag">LIVE ARRIVAL ESTIMATE</div>
+                            <div class="arrival-huge-text" id="cleanCountdownNumber">
+                                8 <span>mins away</span>
+                            </div>
+                            <div class="arrival-stop-desc" id="cleanArrivalStopDesc">
+                                Arriving at your stop: <strong>Somaram Junction</strong>
+                            </div>
+
+                            <div class="arrival-sub-grid">
+                                <div>
+                                    <div class="lbl">Scheduled Time</div>
+                                    <div class="val" id="cleanScheduledTime">08:28 AM</div>
+                                </div>
+                                <div>
+                                    <div class="lbl">Distance Remaining</div>
+                                    <div class="val" id="cleanDistRemaining">2.4 Kilometers</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver Info Card -->
+                        <div class="clean-driver-card">
+                            <div class="driver-top-flex">
+                                <div class="driver-info-left">
+                                    <div class="driver-avatar-circle" id="cleanDriverInitials">KS</div>
+                                    <div>
+                                        <h4 id="cleanDriverName" style="font-size: 14px; font-weight: 700; color: var(--text-primary);">K. Satyanarayana &#10003;</h4>
+                                        <p id="cleanDriverExp" style="font-size: 11px; color: var(--text-muted);">Certified Senior Driver &bull; 14 yrs exp</p>
+                                    </div>
+                                </div>
+                                <button class="btn-call-blue" onclick="triggerCallDriver()">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                    Call Driver
+                                </button>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-default); padding-top: 8px;">
+                                <span>Bus Model: <strong id="cleanBusModel">Eicher Starline 48-S</strong></span>
+                                <span>Registration: <strong id="cleanBusReg">AP 37 TE 8821</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Route Timeline -->
+                        <div class="clean-timeline-card">
+                            <div class="clean-timeline-header">
+                                <span>Route 12 Timeline</span>
+                                <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">6 Stops</span>
+                            </div>
+
+                            <div class="timeline-stops-container" id="waypointTimelineList">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Helpdesk -->
+                        <div style="background: var(--canvas-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-card);">
+                            <div>
+                                <h5 style="font-size: 13px; font-weight: 700; color: var(--text-primary);">DNR Transit Helpdesk</h5>
+                                <p style="font-size: 11px; color: var(--text-muted);">+91 8816 221234 (Ext 104)</p>
+                            </div>
+                            <button class="btn-pill-action" onclick="contactControlOffice()">Contact</button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 3: DRIVER CONSOLE (CAMPUS TRANSIT CLARITY)
+             ========================================================= -->
+        <section id="driverPortalView" class="clarity-view">
+            
+            <div class="driver-clean-layout">
+                
+                <!-- Driver Top Bar -->
+                <div class="driver-clean-topbar">
+                    <div class="driver-identity">
+                        <div class="steering-icon-square">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="m4.93 4.93 4.24 4.24"/>
+                                <path d="m14.83 9.17 4.24-4.24"/>
+                                <path d="M12 15v7"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                <span>K. Satyanarayana</span>
+                                <span class="gateway-badge" style="margin: 0; padding: 1px 8px; font-size: 11px;">Bus 12</span>
+                            </h3>
+                            <p style="font-size: 12px; color: var(--text-muted);">Route 12: Bhimavaram RTC &rarr; DNR Campus</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span class="status-pill-live">
+                            <span class="pulsing-dot"></span>
+                            GPS CONNECTED &amp; SYNCED
+                        </span>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+                            CURRENT TIME: <strong id="driverTimeDisplay" style="color: var(--text-primary);">08:25 AM</strong>
+                        </div>
+                        <button class="btn-pill-action" onclick="triggerCabinChime()">
+                            Dispatch Voice
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Turn Guidance & Speed Grid -->
+                <div class="guidance-speed-grid">
+                    
+                    <!-- Turn Guidance Box -->
+                    <div class="guidance-box-card">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--brand-emerald-text); font-weight: 700; margin-bottom: 12px;">
+                                <span>LIVE NAVIGATION GUIDANCE</span>
+                                <span style="background: var(--canvas-subtle); padding: 2px 10px; border-radius: var(--radius-pill); color: var(--text-secondary); font-weight: 600;">Next Stop: Underground Bus Stop (3 mins)</span>
+                            </div>
+
+                            <div class="turn-instruction-row">
+                                <div class="turn-arrow-black">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+                                <div class="turn-text-content">
+                                    <div class="turn-meters">In 450 meters</div>
+                                    <h2>Turn Right on College Road</h2>
+                                    <p>Then continue straight towards DNR Campus North Gate</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="route-progress-wrapper">
+                            <div class="progress-headline">
+                                <span>Route Progress: 75% Completed</span>
+                                <span>14.2 km / 18.0 km</span>
+                            </div>
+                            <div class="progress-track-clean">
+                                <div class="progress-fill-clean" id="driverProgressBar" style="width: 75%;"></div>
+                            </div>
+                            <div class="progress-stops-line">
+                                <span>RTC Bus Station (Start)</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">Current: Canal Junction</span>
+                                <span>DNR Campus Main Gate (Terminal)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Speedometer Clean Card -->
+                    <div class="speed-clean-card">
+                        <div class="speed-headline-row">
+                            <span>CURRENT SPEED</span>
+                            <span class="status-pill-live" style="font-size: 10px; padding: 2px 8px;">Smooth Traffic</span>
+                        </div>
+
+                        <div class="huge-speed-number" id="cockpitSpeedNumber">
+                            42 <span>km/h</span>
+                        </div>
+
+                        <div class="speed-limit-capsule">
+                            <span class="limit-red-circle">50</span>
+                            <span>Speed Limit: 50 km/h</span>
+                        </div>
+
+                        <div class="driver-quick-stats-row">
+                            <div class="quick-stat-box">
+                                <div class="lbl">TRIP RUNTIME</div>
+                                <div class="val" id="missionDuration">00:38:17</div>
+                            </div>
+                            <div class="quick-stat-box">
+                                <div class="lbl">REMAINING DIST.</div>
+                                <div class="val">3.8 km</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 3 Upcoming Route Stops Cards -->
+                <div class="driver-stops-row">
+                    <div class="driver-stop-card">
+                        <div class="stop-tag-flex">
+                            <span class="stop-tag-black">NEXT STOP</span>
+                            <span style="font-size: 11px; font-weight: 700; color: var(--brand-emerald-text);">ETA: 3 mins</span>
+                        </div>
+                        <div class="stop-name-title">Underground Bus Stop</div>
+                        <div class="stop-sub-title">Near Old Bridge Junction</div>
+                        <div class="stop-pax-count">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            Waiting Passengers: 3 Students
+                        </div>
+                    </div>
+
+                    <div class="driver-stop-card">
+                        <div class="stop-tag-flex">
+                            <span class="gateway-badge" style="margin: 0; padding: 1px 8px; font-size: 10px;">STOP 8</span>
+                            <span style="font-size: 11px; font-weight: 600; color: var(--text-muted);">ETA: 7 mins</span>
+                        </div>
+                        <div class="stop-name-title">Somaram Junction</div>
+                        <div class="stop-sub-title">Canal Bank Road Cross</div>
+                        <div class="stop-pax-count">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            Waiting Passengers: 6 Students
+                        </div>
+                    </div>
+
+                    <div class="driver-stop-card">
+                        <div class="stop-tag-flex">
+                            <span class="gateway-badge" style="margin: 0; padding: 1px 8px; font-size: 10px; color: var(--brand-cobalt);">TERMINAL</span>
+                            <span style="font-size: 11px; font-weight: 600; color: var(--text-muted);">ETA: 12 mins</span>
+                        </div>
+                        <div class="stop-name-title">DNR Main Gate Terminal</div>
+                        <div class="stop-sub-title">Campus Main Entrance</div>
+                        <div style="font-size: 12px; color: var(--brand-cobalt); font-weight: 600;">
+                            Final Disembark &bull; Campus Arrival
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactical Driver Pads (Clean Light) -->
+                <div class="tactical-pads-clean">
+                    <button class="tactical-btn-clean active-green" id="btnTripRunning" onclick="toggleTripActiveState()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-emerald);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="btn-lbl" id="tripRunningTitle">Trip Active</span>
+                        <span class="btn-sub" id="tripRunningSub">Tap to Resume / Refresh</span>
+                    </button>
+
+                    <button class="tactical-btn-clean" onclick="triggerDelayNotice()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span class="btn-lbl">Delay Alert</span>
+                        <span class="btn-sub">Notify Dispatch &amp; Parents</span>
+                    </button>
+
+                    <button class="tactical-btn-clean" onclick="triggerCabinChime()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span class="btn-lbl">Next Stop Done</span>
+                        <span class="btn-sub">Underground Stop Complete</span>
+                    </button>
+
+                    <button class="tactical-btn-clean sos-card" id="btnSosHold" onmousedown="startSosHold()" onmouseup="cancelSosHold()" onmouseleave="cancelSosHold()" ontouchstart="startSosHold()" ontouchend="cancelSosHold()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span class="btn-lbl" id="sosButtonText">&#9888; Emergency SOS</span>
+                        <span class="btn-sub">HOLD FOR 3 SECONDS</span>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 4: MANAGEMENT & FLEET COMMAND (CAMPUS TRANSIT CLARITY)
+             ========================================================= -->
+        <section id="managementPortalView" class="clarity-view">
+            
+            <div class="management-clean-layout">
+                
+                <!-- Operations Center Header -->
+                <div class="fleet-center-header">
+                    <div class="fleet-center-text">
+                        <h2>Fleet Operations Center</h2>
+                        <p>Real-time telemetry, live feeder tracking, and instant safety dispatch for West Godavari routes.</p>
+                    </div>
+
+                    <div class="fleet-top-actions">
+                        <button class="btn-pill-action" onclick="openScheduleModal()">
+                            Simulate Safety Drill
+                        </button>
+                        <button class="btn-pill-action blue" onclick="openNewRouteModal()">
+                            Fleet Broadcast
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 Top KPI Cards -->
+                <div class="fleet-kpis-grid">
+                    <div class="fleet-kpi-card-clean">
+                        <div class="kpi-main-block">
+                            <div class="kpi-title-small">TOTAL FLEET BUSES</div>
+                            <div class="kpi-giant-num">24</div>
+                            <div class="kpi-sub-desc">Full institutional capacity</div>
+                        </div>
+                        <div class="kpi-right-icon blue">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="fleet-kpi-card-clean">
+                        <div class="kpi-main-block">
+                            <div class="kpi-title-small">ACTIVE ON ROUTE</div>
+                            <div class="kpi-giant-num">18</div>
+                            <div class="kpi-sub-desc" style="color: var(--brand-emerald-text);">&bull; 75% deployed</div>
+                        </div>
+                        <div class="kpi-right-icon green">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="fleet-kpi-card-clean">
+                        <div class="kpi-main-block">
+                            <div class="kpi-title-small">ON SCHEDULE</div>
+                            <div class="kpi-giant-num">94.2%</div>
+                            <div class="kpi-sub-desc">2 delayed due to canal works</div>
+                        </div>
+                        <div class="kpi-right-icon purple">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="fleet-kpi-card-clean">
+                        <div class="kpi-main-block">
+                            <div class="kpi-title-small">DRIVERS ON DUTY</div>
+                            <div class="kpi-giant-num">18 <small style="font-size: 18px; font-weight: normal; color: var(--text-muted);">/ 18</small></div>
+                            <div class="kpi-sub-desc">100% check-in verified</div>
+                        </div>
+                        <div class="kpi-right-icon teal">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIS Corridor Map & Safety Desk -->
+                <div class="management-gis-grid">
+                    
+                    <!-- Left: Feeder Corridor Live GIS -->
+                    <div class="management-map-card">
+                        <div class="management-map-header">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+                                <span>Bhimavaram Feeder Corridor Live GIS</span>
+                                <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">&bull; Lat 16.5449° N, Long 81.5212° E</span>
+                            </div>
+
+                            <div class="map-pills-row">
+                                <button class="map-pill-btn active">Routes</button>
+                                <button class="map-pill-btn" onclick="toggleLiveTraffic(this)">Traffic</button>
+                                <button class="map-pill-btn" onclick="toggleGeofenceLayer(this)">Campus Hub</button>
+                            </div>
+                        </div>
+
+                        <!-- Management Leaflet Map -->
+                        <div id="managementMap" class="management-canvas-area"></div>
+
+                        <div class="management-map-footer">
+                            <div style="display: flex; gap: 16px;">
+                                <span><strong style="color: var(--brand-cobalt);">&bull;</strong> Active Corridors</span>
+                                <span><strong style="color: var(--brand-amber);">&bull;</strong> Route Divergence / Delay</span>
+                                <span><strong style="color: var(--text-muted);">&bull;</strong> Campus Depot Standby</span>
+                            </div>
+                            <div>Refresh cadence: 1.2s &bull; Dual-Band GPS</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Safety Desk & Alerts -->
+                    <div class="safety-desk-card">
+                        <div class="safety-header-row">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-emerald);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <span>Safety &amp; Response Desk</span>
+                            </div>
+                            <span class="status-pill-live" style="font-size: 10px;">Normal</span>
+                        </div>
+
+                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+                            All buses reporting steady telemetry within geofenced corridors. Zero SOS activations logged for morning inbound run.
+                        </p>
+
+                        <div style="background: var(--canvas-subtle); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Campus Marshal Hotline</div>
+                                <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">+91 8816 221234 (Ext 400)</div>
+                            </div>
+                            <button class="btn-pill-action" onclick="callCampusSecurity()">Quick Call</button>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+                                <span>Live Feeder Alerts</span>
+                                <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">Last 15 mins</span>
+                            </div>
+
+                            <div class="alerts-feed-clean">
+                                <div class="alert-item-box">
+                                    <span class="alert-time">3m ago</span>
+                                    <div class="alert-title">Bus 07: Traffic Slowdown</div>
+                                    <div class="alert-text">Canal bridge culvert construction near Juvvalapalem. ETA extended by 7 minutes.</div>
+                                </div>
+                                <div class="alert-item-box normal">
+                                    <span class="alert-time">5m ago</span>
+                                    <div class="alert-title">Bus 04: Approaching Campus</div>
+                                    <div class="alert-text">Cleared Kalla Toll Gate on schedule. Capacity 85% full.</div>
+                                </div>
+                                <div class="alert-item-box normal">
+                                    <span class="alert-time">12m ago</span>
+                                    <div class="alert-title">Depot Standby Unit</div>
+                                    <div class="alert-text">Bus 16 inspected and staged at main yard for afternoon return rotation.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-top: auto;">
+                            <button class="btn-pill-action" style="flex: 1;" onclick="openScheduleModal()">Adjust Timings</button>
+                            <button class="btn-pill-action" style="flex: 1; background: #0f172a; color: #ffffff;" onclick="openNewRouteModal()">New Run +</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Full Fleet Roster Table -->
+                <div class="clean-roster-card">
+                    <div class="clean-roster-toolbar">
+                        <input type="text" id="rosterSearchInput" class="clean-search-input" placeholder="Search by bus #, driver, or route..." onkeyup="filterFleetRoster(this.value)">
+
+                        <div class="clean-filter-pills">
+                            <button class="filter-pill-btn active" onclick="filterRosterTab('ALL', this)">All (24)</button>
+                            <button class="filter-pill-btn" onclick="filterRosterTab('active', this)">Active (18)</button>
+                            <button class="filter-pill-btn" onclick="filterRosterTab('delayed', this)">Delayed (2)</button>
+                            <button class="filter-pill-btn" onclick="filterRosterTab('depot', this)">Depot (4)</button>
+                            <button class="filter-pill-btn" onclick="exportFleetCsv()">
+                                &darr; Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="clean-table" id="fleetRosterTable">
+                            <thead>
+                                <tr>
+                                    <th>BUS ID</th>
+                                    <th>ROUTE &amp; SECTOR</th>
+                                    <th>DRIVER ASSIGNED</th>
+                                    <th>STATUS</th>
+                                    <th>CURRENT STOP / LOCATION</th>
+                                    <th>ETA TO CAMPUS</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rosterTableBody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Clean Footer -->
+    <footer class="clarity-footer">
+        <div class="clarity-footer-inner">
+            <div>
+                &copy; 2026 DNR College, Bhimavaram &bull; Campus Transit &amp; Safety Division
+            </div>
+            <div>
+                <a href="javascript:void(0)">Student Transit Pass Verified</a>
+                <a href="javascript:void(0)">Privacy &amp; Terms</a>
+                <a href="javascript:void(0)">Emergency Helplines</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/routes-data.js"></script>
+    <script src="js/audio-service.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/simulator.js"></script>
+    <script src="js/map-service.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
